@@ -32,11 +32,19 @@ CONTAINS
       glob_ord(i)=i
     ENDDO
 
-    WRITE(*,'(A,ES16.8)')'Number of possible paths: ',num_perms
+    !WRITE(*,'(A,ES16.8)')'Number of possible paths: ',num_perms
 
     !find minimum path length brute force wise (only if estimated time is under 100 seconds)
     est_time=num_perms*num_customers*prob_dim*2.0E-09
-    WRITE(*,'(A,ES16.8,A)')'Estimated brute force calculation time ',est_time,' seconds'
+    !WRITE(*,'(A,ES16.8,A)')'Estimated brute force calculation time ',est_time,' seconds'
+    sort_best=0
+    IF(prob_dim .EQ. 1)THEN
+      min_ord=glob_ord
+      CALL Bubble_Sort(min_ord)
+      min_len=path_len(min_ord)
+      !WRITE(*,'(A,ES16.8)')'Order Minimum path length: ',min_len
+      sort_best=min_len
+    ENDIF
     IF(est_time .LE. 1.0E+03)THEN
       CALL CPU_TIME(start)
       CALL find_min(1)
@@ -44,10 +52,13 @@ CONTAINS
       WRITE(*,'(A,ES16.8)')'Average path length: ',avg_len/num_perms
       WRITE(*,'(A,ES16.8)')'Minimum path length: ',min_len
       WRITE(*,'(A,ES16.8)')'Maximum path length: ',max_len
-      WRITE(*,'(A,13I2)')'Minimum path: ',min_ord
+      WRITE(*,'(A,10000I6)')'Minimum path: ',min_ord
       !WRITE(*,'(A,13I2)')'Maximum path: ',max_ord
       WRITE(*,'(A,ES16.8,A)')'Brute force optimization finished in: ',finish-start,' seconds'
+      sort_best=min_len
     ENDIF
+
+    DEALLOCATE(glob_ord,min_ord,max_ord)
   ENDSUBROUTINE ts_init
 
   RECURSIVE SUBROUTINE find_min(i)
@@ -101,4 +112,24 @@ CONTAINS
     ENDDO
     dist=SQRT(dist)
   ENDFUNCTION dist
+
+  SUBROUTINE Bubble_Sort(a)
+  INTEGER, INTENT(in out), DIMENSION(:) :: a
+  INTEGER :: temp
+  INTEGER :: i, j
+  LOGICAL :: swapped
+
+  DO j = SIZE(a)-1, 1, -1
+    swapped = .FALSE.
+    DO i = 1, j
+      IF (cust_locs(a(i),1) > cust_locs(a(i+1),1)) THEN
+        temp = a(i)
+        a(i) = a(i+1)
+        a(i+1) = temp
+        swapped = .TRUE.
+      END IF
+    END DO
+    IF (.NOT. swapped) EXIT
+  END DO
+END SUBROUTINE Bubble_Sort
 END MODULE travel_sales

@@ -6,9 +6,12 @@ MODULE globals
   REAL(8),ALLOCATABLE :: cust_locs(:,:)
 
   !number of customers
-  INTEGER :: num_customers=10
+  INTEGER :: num_customers=40
 
   !traveling salesman problem dimensions
-  INTEGER :: prob_dim=2
+  INTEGER :: prob_dim=1
+
+  !best from sa and sort
+  REAL(8) :: sa_best,sort_best
 CONTAINS
 END MODULE globals

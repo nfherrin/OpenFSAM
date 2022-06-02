@@ -6,7 +6,7 @@ MODULE sim_anneal
   PRIVATE
   PUBLIC simulate_anneal
 
-  REAL(8) :: alpha=0.0001,t_current,t_max=100,t_min=0.0001,e_current,e_best
+  REAL(8) :: alpha=0.0001,t_current,t_max=100,t_min=0,e_current,e_best
   INTEGER,ALLOCATABLE :: s_current(:),s_neigh(:)
   INTEGER :: step
 CONTAINS
@@ -15,16 +15,16 @@ CONTAINS
   SUBROUTINE simulate_anneal()
     REAL(8) :: e_neigh
     INTEGER,ALLOCATABLE :: s_best(:)
-    INTEGER :: max_step,i
+    INTEGER :: max_step,i,step_actual
     REAL(8) :: temp_r,start,finish
 
-    write(*,*)'**********************************************************************************'
-    write(*,*)'**********************************************************************************'
-    write(*,*)'**********************************************************************************'
-    write(*,*)'**********************************************************************************'
-    write(*,*)'**********************************************************************************'
-    write(*,*)'performing simulated annealing'
-    write(*,*)'**********************************************************************************'
+    !write(*,*)'**********************************************************************************'
+    !write(*,*)'**********************************************************************************'
+    !write(*,*)'**********************************************************************************'
+    !write(*,*)'**********************************************************************************'
+    !write(*,*)'**********************************************************************************'
+    !write(*,*)'performing simulated annealing'
+    !write(*,*)'**********************************************************************************'
 
     ALLOCATE(s_current(num_customers))
     ALLOCATE(s_neigh(num_customers))
@@ -41,11 +41,13 @@ CONTAINS
     e_best=e_current
 
     alpha=0.85
-    max_step=1000000000
+    max_step=100000000
     step=0
+    step_actual=0
     CALL CPU_TIME(start)
     DO WHILE(step .LE. max_step .AND. t_current .GE. t_min)
       step=step+1
+      step_actual=step_actual+1
       !get a new neighbor and compute energy
       CALL get_neigh()
       e_neigh=path_len(s_neigh)
@@ -60,18 +62,26 @@ CONTAINS
       !cool the temperature
       CALL temp_cool()
       !if it is the best energy, it's our new best value
-      IF(e_current .LE. e_best)THEN
+      IF(e_current .LT. e_best)THEN
         e_best=e_current
         s_best=s_current
+        !IF(step .GT. 100)step=step-100
+        !write(*,*)step_actual,step,e_best
       ENDIF
+      !IF(MOD(step,1000) .EQ. 0)THEN
+      !  e_current=e_best
+      !  s_current=s_best
+      !ENDIF
       !WRITE(*,*)t_current
     ENDDO
     CALL CPU_TIME(finish)
 
-    WRITE(*,'(A,ES16.8)')'iterations',(step-1)*1.0
-    WRITE(*,'(A,ES16.8)')'Minimum path length:',e_best
-    WRITE(*,'(A,1000I6)')'Minimum path:',s_best
-    WRITE(*,'(A,ES16.8,A)')'Simulated annealing finished in: ',finish-start,' seconds'
+    WRITE(*,'(A,ES16.8)',ADVANCE='NO')'iterations',(step_actual-1)*1.0
+    !WRITE(*,'(A,ES16.8)')'SA Minimum path length:',e_best
+    sa_best=e_best
+    !WRITE(*,'(A,1000I6)')'Minimum path:',s_best
+    !WRITE(*,'(A,ES16.8,A)')'Simulated annealing finished in: ',finish-start,' seconds'
+    DEALLOCATE(s_current,s_neigh,s_best)
   ENDSUBROUTINE simulate_anneal
 
   !get a new neighbor state
@@ -100,7 +110,13 @@ CONTAINS
     REAL(8) :: delta_e
 
     delta_e=e_neigh-e_current
-    accept_prob=EXP(-delta_e/t_current)
+    IF(-delta_e/t_current .LE. -700)THEN
+      accept_prob=0.0
+    ELSEIF(-delta_e/t_current .GE. 700)THEN
+      accept_prob=10.0
+    ELSE
+      accept_prob=EXP(-delta_e/t_current)
+    ENDIF
   ENDFUNCTION accept_prob
 
   !non-monotonic adaptive cooling schedule
