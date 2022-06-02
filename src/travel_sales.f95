@@ -3,21 +3,23 @@ MODULE travel_sales
   USE globals
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: ts_init
+  PUBLIC ts_init,path_len,dist
+
   INTEGER,ALLOCATABLE :: glob_ord(:),min_ord(:),max_ord(:)
   REAL(8) :: min_len=1.0D+308,max_len=0.0,avg_len=0.0
 CONTAINS
   !traveling salesman initialization problem
   SUBROUTINE ts_init()
-    INTEGER :: i
-    INTEGER :: fact=1
-    REAL(8) :: start,finish
+    INTEGER :: i,j
+    REAL(8) :: num_perms=1
+    REAL(8) :: start,finish,est_time
 
-    ALLOCATE(cust_locs(num_customers,2))
+    ALLOCATE(cust_locs(num_customers,prob_dim))
     !each customer is given a random 2D location on a 1x1 grid
     DO i=1,num_customers
-      CALL random_number(cust_locs(i,1))
-      CALL random_number(cust_locs(i,2))
+      DO j=1,prob_dim
+        CALL random_number(cust_locs(i,prob_dim))
+      ENDDO
     ENDDO
 
     ALLOCATE(glob_ord(num_customers))
@@ -26,23 +28,25 @@ CONTAINS
 
     !compute number of permutations and initialize the first permutation (just ordered)
     DO i=1,num_customers
-      fact=fact*i
+      num_perms=num_perms*i
       glob_ord(i)=i
     ENDDO
 
-    WRITE(*,'(A,I0)')' Number of possible paths: ',fact
+    WRITE(*,'(A,ES16.8)')'Number of possible paths: ',num_perms
 
-    !find minimum path length brute force wise (only if num_customers<=15)
-    IF(num_customers .LE. 13)THEN
+    !find minimum path length brute force wise (only if estimated time is under 100 seconds)
+    est_time=num_perms*num_customers*prob_dim*2.0E-09
+    WRITE(*,'(A,ES16.8,A)')'Estimated brute force calculation time ',est_time,' seconds'
+    IF(est_time .LE. 1.0E+03)THEN
       CALL CPU_TIME(start)
       CALL find_min(1)
       CALL CPU_TIME(finish)
-      WRITE(*,*)'Average path length: ',avg_len/(fact*1.0)
-      WRITE(*,*)'Minimum length',min_len
-      WRITE(*,*)'Minimum order',min_ord
-      WRITE(*,*)'Maximum length',max_len
-      WRITE(*,*)'Maximum order',max_ord
-      WRITE(*,*)'Brute force optimization finished in: ',finish-start,' seconds'
+      WRITE(*,'(A,ES16.8)')'Average path length: ',avg_len/num_perms
+      WRITE(*,'(A,ES16.8)')'Minimum path length: ',min_len
+      WRITE(*,'(A,ES16.8)')'Maximum path length: ',max_len
+      WRITE(*,'(A,13I2)')'Minimum path: ',min_ord
+      !WRITE(*,'(A,13I2)')'Maximum path: ',max_ord
+      WRITE(*,'(A,ES16.8,A)')'Brute force optimization finished in: ',finish-start,' seconds'
     ENDIF
   ENDSUBROUTINE ts_init
 

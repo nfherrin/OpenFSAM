@@ -9,4 +9,6 @@ PROGRAM fortNNASA
 
   CALL ts_init()
 
+  CALL simulate_anneal()
+
 END PROGRAM fortNNASA
