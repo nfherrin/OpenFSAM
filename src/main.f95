@@ -9,7 +9,7 @@ PROGRAM fortNNASA
 
   INTEGER :: i
 
-  DO i=1,2
+  DO i=1,1000
     CALL ts_init()
 
     CALL simulate_anneal()
