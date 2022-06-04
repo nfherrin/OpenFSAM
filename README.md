@@ -1,2 +1,2 @@
 # fortNNASA
-A Fortran based neural network accelerated simulated annealing code
+A Fortran based open source simulated annealing utility.
