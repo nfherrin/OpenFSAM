@@ -4,9 +4,9 @@ A Fortran based open source simulated annealing utility.
 This utility consists of a single module that can be generally assigned to solve a [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) optimization problem.
 A user can easily add this module to any existing modern Fortran program since the module is self contained and sufficiently abstracted.
 
-To use the simulated annealing module, point to it properly in the make file and add `USE sim_anneal` to the module/program this is using it.
+To use the simulated annealing module, point to it properly in your make file and add `USE sim_anneal` to the module/program that is using it.
 The simulated annealing module has two public types `sa_comb_type` and `sa_cont_type`.
-`sa_comb_type` is a combinatorial type simulated annealing solver and `sa_cont_type` is a continuous function simulated annealing solver.
+`sa_comb_type` is a combinatorial type simulated annealing optimizer and `sa_cont_type` is a continuous function simulated annealing optimizer.
 To use, create a simulated annealing object with `TYPE(sa_comb_type) :: <sa_object>`.
 This object now needs to be initialized.
 To initialize, the user must specify the following variables
@@ -64,3 +64,56 @@ A brief explanation of the user initialized variables:
     Half the damping factor is the maximum perturbation, positive or negative, that each state variable might be subjected to when finding a new neighbor.
   10. \[For continuous annealing problems ONLY\] The minimum and maximum state variables prevent the continuous state variables from being perturbed outside specified bounds of the problem.
     The user should ensure that only problem breaking values are excluded, otherwise the annealing may not be able to find the optimum state.
+
+The user may now use the simulated annealing optimization in their code by calling `<sa_object>%optimize`.
+This subroutine results in the optimal state array found stored in `<sa_object>%state_best` and the energy of that state is stored in `<sa_object>%e_best`.
+
+An example of usage of this utility is given in `examples/traveling_sales_general` in which simulated annealing is used to optimize a traveling salesman problem.
+The simulated annealing object is defined in `globals.f90` as
+```
+TYPE(sa_comb_type) :: ts_simanneal
+```
+And is initialized in `travel_sales.f90` with the following code:
+```
+  SUBROUTINE setup_ts_sa()
+    INTEGER :: i
+
+    ts_simanneal%max_step=1000000
+    ts_simanneal%alpha=0.85
+    ts_simanneal%t_max=100
+    ts_simanneal%t_min=0
+    ts_simanneal%cool_opt='QuadMult'
+    ts_simanneal%mon_cool=.FALSE.
+    ALLOCATE(ts_simanneal%state_curr(num_customers))
+    DO i=1,num_customers
+      ts_simanneal%state_curr(i)=i
+    ENDDO
+    !point to a path length function that works with the SA type
+    ts_simanneal%energy => path_len_eg
+  ENDSUBROUTINE setup_ts_sa
+```
+where the energy function is defined as
+```
+  FUNCTION path_len_eg(thisSA,state_ord)
+    CLASS(sa_comb_type),INTENT(INOUT) :: thisSA
+    INTEGER,DIMENSION(:),INTENT(IN) :: state_ord
+    REAL(8) :: path_len_eg
+
+    INTEGER :: i
+
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)i=thisSA%size_states
+
+    path_len_eg=0
+    DO i=1,SIZE(state_ord)-1
+      path_len_eg=path_len_eg+dist(cust_locs(state_ord(i),:),cust_locs(state_ord(i+1),:))
+    ENDDO
+  ENDFUNCTION path_len_eg
+```
+
+With the traveling salesman problem setup and simulated annealing initialization complete, the optimization is then called in `main.f90` as
+```
+  CALL ts_simanneal%optimize()
+```
+
+Which can then view the optimal state array in the form of `ts_simanneal%state_best` with an energy of `ts_simanneal%e_best`.
