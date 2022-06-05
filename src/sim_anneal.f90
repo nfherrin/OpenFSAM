@@ -23,7 +23,7 @@ MODULE sim_anneal
     !best energy
     REAL(8) :: e_best=1.0D+307
     !cooling option
-    CHARACTER(64) :: cool_opt=''
+    CHARACTER(64) :: cool_opt='LinMult'
     !whether cooling is monotonic or not
     LOGICAL :: mon_cool=.TRUE.
     !Cooling schedule
@@ -57,7 +57,7 @@ MODULE sim_anneal
     !best energy state
     REAL(8), ALLOCATABLE, DIMENSION(:) :: state_best
     !damping factor
-    REAL(8) :: damping=0.01
+    REAL(8) :: damping=1.0
     !upper and lower bounds, will be set to bounds of initial state if not changed
     REAL(8) :: smin=0.0,smax=0.0
     !energy calculation
@@ -248,10 +248,12 @@ CONTAINS
   FUNCTION get_neigh_cont(thisSA,s_curr,damping,smin,smax)
     CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: s_curr(:)
-    REAL(8),INTENT(IN),OPTIONAL :: damping,smin,smax
+    REAL(8),INTENT(IN),OPTIONAL :: damping
+    REAL(8),INTENT(IN),OPTIONAL :: smin,smax
     REAL(8),DIMENSION(SIZE(s_curr)) :: get_neigh_cont
 
-    REAL(8) :: temp_r,damp_app,max_ch,min_ch
+    REAL(8) :: damp_app
+    REAL(8) :: temp_r,max_ch,min_ch
     INTEGER :: i
 
     !this line is literally just to insure that it doesn't complain about not using the variables
@@ -304,6 +306,12 @@ CONTAINS
         thisSA%cool => exp_add_cool
       CASE('TrigAdd')
         thisSA%cool => trig_add_cool
+      CASE('custom')
+        !do nothing, it is assumed the user already assgined a custom cooling schedule
+        WRITE(*,*)'Using user specified cooling function'
+      CASE DEFAULT
+        WRITE(*,'(2A)')TRIM(ADJUSTL(thisSA%cool_opt)),' is not a valid cooling option'
+        STOP 'The user MUST select a valid cooling option or give a custom cooling function'
     ENDSELECT
   ENDSUBROUTINE set_cooling
 

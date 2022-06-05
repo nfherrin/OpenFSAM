@@ -136,7 +136,6 @@ CONTAINS
   SUBROUTINE setup_ts_sa()
     INTEGER :: i
 
-    ts_simanneal%size_states=num_customers
     ts_simanneal%max_step=1000000
     ts_simanneal%alpha=0.85
     ts_simanneal%t_max=100
