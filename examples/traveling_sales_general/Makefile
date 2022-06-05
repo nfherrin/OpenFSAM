@@ -1,6 +1,6 @@
 # Defining variables
 FC:=gfortran
-EXE:=ts_gen
+EXE:=traveling_sales_general
 EXT:=.exe
 
 all:			TYPE :=

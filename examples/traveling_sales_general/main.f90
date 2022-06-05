@@ -7,8 +7,6 @@ PROGRAM fortNNASA
   USE travel_sales
   IMPLICIT NONE
 
-  INTEGER :: i
-
   CALL get_cmdargs()
 
   CALL ts_init()

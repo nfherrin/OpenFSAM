@@ -159,6 +159,9 @@ CONTAINS
 
     INTEGER :: i
 
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)i=thisSA%size_states
+
     path_len_eg=0
     DO i=1,SIZE(state_ord)-1
       path_len_eg=path_len_eg+dist(cust_locs(state_ord(i),:),cust_locs(state_ord(i+1),:))

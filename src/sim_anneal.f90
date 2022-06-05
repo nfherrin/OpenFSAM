@@ -4,7 +4,7 @@ MODULE sim_anneal
   PRIVATE
   PUBLIC sa_comb_type,sa_cont_type
 
-  REAL,PARAMETER :: pi=4.D0*ATAN(1.D0)
+  REAL(8),PARAMETER :: pi=4.D0*ATAN(1.D0)
 
 !the base simulated annealing solver type
   TYPE,ABSTRACT :: sa_type_base
@@ -104,8 +104,7 @@ CONTAINS
   SUBROUTINE optimize(thisSA)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8) :: e_neigh
-    INTEGER,ALLOCATABLE :: s_best(:)
-    INTEGER :: i,step
+    INTEGER :: step
     REAL(8) :: temp_r,start,finish,e_curr,t_curr
 
     CALL set_cooling(thisSA)
@@ -202,6 +201,22 @@ CONTAINS
     ENDIF
   ENDSUBROUTINE optimize
 
+  !function for the acceptance probability
+  FUNCTION accept_prob(e_current,e_neigh,t_current)
+    REAL(8),INTENT(IN) :: e_current,e_neigh,t_current
+    REAL(8) :: accept_prob
+    REAL(8) :: delta_e
+
+    delta_e=e_neigh-e_current
+    IF(-delta_e/t_current .LE. -700)THEN
+      accept_prob=0.0
+    ELSEIF(-delta_e/t_current .GE. 700)THEN
+      accept_prob=10.0
+    ELSE
+      accept_prob=EXP(-delta_e/t_current)
+    ENDIF
+  ENDFUNCTION accept_prob
+
   !get a new neighbor state for a combinatorial problem
   FUNCTION get_neigh_comb(thisSA,s_curr)
     CLASS(sa_comb_type),INTENT(INOUT) :: thisSA
@@ -210,6 +225,9 @@ CONTAINS
 
     INTEGER :: j1,j2
     REAL(8) :: temp_r
+
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)temp_r=thisSA%e_best
 
     get_neigh_comb=s_curr
     !get switch indeces
@@ -236,6 +254,9 @@ CONTAINS
     REAL(8) :: temp_r,damp_app,max_ch,min_ch
     INTEGER :: i
 
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)temp_r=thisSA%e_best
+
     !set the damping factor and bounds
     IF(PRESENT(damping))THEN
       damp_app=damping
@@ -261,22 +282,6 @@ CONTAINS
       get_neigh_cont(i)=MAX(MIN(get_neigh_cont(i),max_ch),min_ch)
     ENDDO
   ENDFUNCTION get_neigh_cont
-
-  !function for the acceptance probability
-  FUNCTION accept_prob(e_current,e_neigh,t_current)
-    REAL(8),INTENT(IN) :: e_current,e_neigh,t_current
-    REAL(8) :: accept_prob
-    REAL(8) :: delta_e
-
-    delta_e=e_neigh-e_current
-    IF(-delta_e/t_current .LE. -700)THEN
-      accept_prob=0.0
-    ELSEIF(-delta_e/t_current .GE. 700)THEN
-      accept_prob=10.0
-    ELSE
-      accept_prob=EXP(-delta_e/t_current)
-    ENDIF
-  ENDFUNCTION accept_prob
 
   !set the cooling schedule
   SUBROUTINE set_cooling(thisSA)
@@ -309,6 +314,9 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: lin_mult_cool
 
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)lin_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
+
     lin_mult_cool=tmax-alpha*k
   ENDFUNCTION lin_mult_cool
 
@@ -318,6 +326,9 @@ CONTAINS
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: exp_mult_cool
+
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)exp_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     exp_mult_cool=tmax*alpha**k
   ENDFUNCTION exp_mult_cool
@@ -329,6 +340,9 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: log_mult_cool
 
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)log_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
+
     log_mult_cool=tmax/(1.0+alpha*LOG10(k+1.0))
   ENDFUNCTION log_mult_cool
 
@@ -338,6 +352,9 @@ CONTAINS
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: quad_mult_cool
+
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)quad_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     quad_mult_cool=tmax/(1.0+alpha*k**2)
   ENDFUNCTION quad_mult_cool
@@ -349,6 +366,9 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: lin_add_cool
 
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)lin_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
+
     lin_add_cool=tmin+(tmax-tmin)*(n*1.0-k)/(n*1.0)
   ENDFUNCTION lin_add_cool
 
@@ -358,6 +378,9 @@ CONTAINS
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: quad_add_cool
+
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)quad_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     quad_add_cool=tmin+(tmax-tmin)*((n*1.0-k)/(n*1.0))**2
   ENDFUNCTION quad_add_cool
@@ -369,6 +392,9 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: exp_add_cool
 
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)exp_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
+
     exp_add_cool=tmin+(tmax-tmin)/(1.0+EXP(2.0*LOG(tmax-tmin)/(n*1.0))*(k-0.5*n))
   ENDFUNCTION exp_add_cool
 
@@ -378,6 +404,9 @@ CONTAINS
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: trig_add_cool
+
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)trig_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     trig_add_cool=tmin+0.5*(tmax-tmin)*(1.0+COS(k*pi/n))
   ENDFUNCTION trig_add_cool
