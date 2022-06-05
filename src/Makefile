@@ -1,6 +1,6 @@
 # Defining variables
 FC:=gfortran
-EXE:=fortNNASA
+EXE:=travel_sales
 EXT:=.exe
 
 all:			TYPE :=

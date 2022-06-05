@@ -3,7 +3,7 @@ MODULE travel_sales
   USE globals
   IMPLICIT NONE
   PRIVATE
-  PUBLIC ts_init,path_len,dist
+  PUBLIC ts_init,path_len,dist,setup_ts_sa
 
   INTEGER,ALLOCATABLE :: glob_ord(:),min_ord(:),max_ord(:)
   REAL(8) :: min_len=1.0D+308,max_len=0.0,avg_len=0.0
@@ -42,10 +42,9 @@ CONTAINS
       min_ord=glob_ord
       CALL Bubble_Sort(min_ord)
       min_len=path_len(min_ord)
-      !WRITE(*,'(A,ES16.8)')'Order Minimum path length: ',min_len
+      WRITE(*,'(A,ES16.8)')'Order Minimum path length: ',min_len
       sort_best=min_len
-    ENDIF
-    IF(est_time .LE. 1.0E+03)THEN
+    ELSEIF(est_time .LE. 1.0E+03)THEN
       CALL CPU_TIME(start)
       CALL find_min(1)
       CALL CPU_TIME(finish)
@@ -114,22 +113,26 @@ CONTAINS
   ENDFUNCTION dist
 
   SUBROUTINE Bubble_Sort(a)
-  INTEGER, INTENT(in out), DIMENSION(:) :: a
-  INTEGER :: temp
-  INTEGER :: i, j
-  LOGICAL :: swapped
+    INTEGER, INTENT(in out), DIMENSION(:) :: a
+    INTEGER :: temp
+    INTEGER :: i, j
+    LOGICAL :: swapped
 
-  DO j = SIZE(a)-1, 1, -1
-    swapped = .FALSE.
-    DO i = 1, j
-      IF (cust_locs(a(i),1) > cust_locs(a(i+1),1)) THEN
-        temp = a(i)
-        a(i) = a(i+1)
-        a(i+1) = temp
-        swapped = .TRUE.
-      END IF
+    DO j = SIZE(a)-1, 1, -1
+      swapped = .FALSE.
+      DO i = 1, j
+        IF (cust_locs(a(i),1) > cust_locs(a(i+1),1)) THEN
+          temp = a(i)
+          a(i) = a(i+1)
+          a(i+1) = temp
+          swapped = .TRUE.
+        END IF
+      END DO
+      IF (.NOT. swapped) EXIT
     END DO
-    IF (.NOT. swapped) EXIT
-  END DO
-END SUBROUTINE Bubble_Sort
+  END SUBROUTINE Bubble_Sort
+
+  !sets up the traveling salesman problem
+  SUBROUTINE setup_ts_sa()
+  ENDSUBROUTINE setup_ts_sa
 END MODULE travel_sales

@@ -9,14 +9,15 @@ PROGRAM fortNNASA
 
   INTEGER :: i
 
-  DO i=1,2
-    CALL ts_init()
+  CALL get_cmdargs()
 
-    !CALL simulate_anneal()
+  CALL ts_init()
 
-    IF(sort_best .GT. 1.0E-10)WRITE(*,'(A,ES16.8)')'  Error: ',ABS(sort_best-sa_best)/sort_best
+  !sets up the simulated annealing for the traveling salesman problem
+  CALL setup_ts_sa()
 
-    DEALLOCATE(cust_locs)
-  ENDDO
+  !CALL simulate_anneal()
+
+  IF(sort_best .GT. 1.0E-10)WRITE(*,'(A,ES16.8)')'  Error: ',ABS(sort_best-sa_best)/sort_best
 
 END PROGRAM fortNNASA

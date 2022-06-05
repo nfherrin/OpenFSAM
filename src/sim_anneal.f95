@@ -34,7 +34,7 @@ MODULE sim_anneal
 !combinatorial simulated annealing type
   TYPE,EXTENDS(sa_type_base) :: sa_comb_type
     !combinatorial problem state array (for perturbing combinatorial problems)
-    INTEGER, POINTER, DIMENSION(:) :: state_cur
+    INTEGER, POINTER, DIMENSION(:) :: state_curr
     !combinatorial problem neighbor array after pertubation
     INTEGER, ALLOCATABLE, DIMENSION(:) :: state_neigh
     !best energy state
@@ -49,7 +49,7 @@ MODULE sim_anneal
 !continuous simulated annealing type
   TYPE,EXTENDS(sa_type_base) :: sa_cont_type
     !continuous problem state array (for perturbing continuous problem values)
-    REAL(8), POINTER, DIMENSION(:) :: state_cur
+    REAL(8), POINTER, DIMENSION(:) :: state_curr
     !continuous problem neighbor array after pertubation
     REAL(8), ALLOCATABLE, DIMENSION(:) :: state_neigh
     !best energy state
@@ -125,10 +125,10 @@ CONTAINS
         IF(.NOT. ALLOCATED(thisSA%state_best))THEN
           ALLOCATE(thisSA%state_best(thisSA%size_states))
         ENDIF
-        thisSA%state_neigh=thisSA%state_cur
-        thisSA%state_best=thisSA%state_cur
+        thisSA%state_neigh=thisSA%state_curr
+        thisSA%state_best=thisSA%state_curr
         !set energy to current energy
-        e_curr=thisSA%energy(thisSA%state_cur)
+        e_curr=thisSA%energy(thisSA%state_curr)
         thisSA%e_best=e_curr
       TYPEIS(sa_cont_type)
         IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
@@ -137,15 +137,15 @@ CONTAINS
         IF(.NOT. ALLOCATED(thisSA%state_best))THEN
           ALLOCATE(thisSA%state_best(thisSA%size_states))
         ENDIF
-        thisSA%state_neigh=thisSA%state_cur
-        thisSA%state_best=thisSA%state_cur
+        thisSA%state_neigh=thisSA%state_curr
+        thisSA%state_best=thisSA%state_curr
         !set energy to current energy
-        e_curr=thisSA%energy(thisSA%state_cur)
+        e_curr=thisSA%energy(thisSA%state_curr)
         thisSA%e_best=e_curr
         !set the bounds if not give
         IF(thisSA%smax-thisSA%smin .LT. 1.0D-13)THEN
-          thisSA%smax=MAXVAL(thisSA%state_cur)
-          thisSA%smin=MINVAL(thisSA%state_cur)
+          thisSA%smax=MAXVAL(thisSA%state_curr)
+          thisSA%smin=MINVAL(thisSA%state_curr)
         ENDIF
     ENDSELECT
 
@@ -157,10 +157,10 @@ CONTAINS
       !get a new neighbor and compute energy
       SELECTTYPE(thisSA)
         TYPEIS(sa_comb_type)
-          thisSA%state_neigh=thisSA%get_neigh(thisSA%state_cur)
+          thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr)
           e_neigh=thisSA%energy(thisSA%state_neigh)
         TYPEIS(sa_cont_type)
-          thisSA%state_neigh=thisSA%get_neigh(thisSA%state_cur,thisSA%damping,thisSA%smax,thisSA%smin)
+          thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr,thisSA%damping,thisSA%smax,thisSA%smin)
           e_neigh=thisSA%energy(thisSA%state_neigh)
       ENDSELECT
       !check and see if we accept the new temperature (lower temps alwasy accepted)
@@ -168,9 +168,9 @@ CONTAINS
       IF(temp_r .LE. accept_prob(e_curr,e_neigh,t_curr))THEN
         SELECTTYPE(thisSA)
           TYPEIS(sa_comb_type)
-            thisSA%state_cur=thisSA%state_neigh
+            thisSA%state_curr=thisSA%state_neigh
           TYPEIS(sa_cont_type)
-            thisSA%state_cur=thisSA%state_neigh
+            thisSA%state_curr=thisSA%state_neigh
         ENDSELECT
         e_curr=e_neigh
       ELSE
@@ -191,6 +191,16 @@ CONTAINS
       ENDIF
     ENDDO
     CALL CPU_TIME(finish)
+
+    !set to the best state we ended up finding.
+    IF(e_curr .LT. thisSA%e_best)THEN
+      SELECTTYPE(thisSA)
+        TYPEIS(sa_comb_type)
+          thisSA%state_curr=thisSA%state_best
+        TYPEIS(sa_cont_type)
+          thisSA%state_curr=thisSA%state_best
+      ENDSELECT
+    ENDIF
   ENDSUBROUTINE optimize
 
   !get a new neighbor state for a combinatorial problem
