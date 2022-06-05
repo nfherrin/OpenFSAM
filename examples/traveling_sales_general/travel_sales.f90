@@ -3,7 +3,7 @@ MODULE travel_sales
   USE globals
   IMPLICIT NONE
   PRIVATE
-  PUBLIC ts_init,path_len,dist
+  PUBLIC ts_init,path_len,dist,setup_ts_sa
 
   INTEGER,ALLOCATABLE :: glob_ord(:),min_ord(:),max_ord(:)
   REAL(8) :: min_len=1.0D+308,max_len=0.0,avg_len=0.0
@@ -32,20 +32,19 @@ CONTAINS
       glob_ord(i)=i
     ENDDO
 
-    !WRITE(*,'(A,ES16.8)')'Number of possible paths: ',num_perms
+    WRITE(*,'(A,ES16.8)')'Number of possible paths: ',num_perms
 
     !find minimum path length brute force wise (only if estimated time is under 100 seconds)
     est_time=num_perms*num_customers*prob_dim*2.0E-09
-    !WRITE(*,'(A,ES16.8,A)')'Estimated brute force calculation time ',est_time,' seconds'
+    WRITE(*,'(A,ES16.8,A)')'Estimated brute force calculation time ',est_time,' seconds'
     sort_best=0
     IF(prob_dim .EQ. 1)THEN
       min_ord=glob_ord
       CALL Bubble_Sort(min_ord)
       min_len=path_len(min_ord)
-      !WRITE(*,'(A,ES16.8)')'Order Minimum path length: ',min_len
+      WRITE(*,'(A,ES16.8)')'Order Minimum path length: ',min_len
       sort_best=min_len
-    ENDIF
-    IF(est_time .LE. 1.0E+03)THEN
+    ELSEIF(est_time .LE. 1.0E+03)THEN
       CALL CPU_TIME(start)
       CALL find_min(1)
       CALL CPU_TIME(finish)
@@ -114,22 +113,57 @@ CONTAINS
   ENDFUNCTION dist
 
   SUBROUTINE Bubble_Sort(a)
-  INTEGER, INTENT(in out), DIMENSION(:) :: a
-  INTEGER :: temp
-  INTEGER :: i, j
-  LOGICAL :: swapped
+    INTEGER, INTENT(in out), DIMENSION(:) :: a
+    INTEGER :: temp
+    INTEGER :: i, j
+    LOGICAL :: swapped
 
-  DO j = SIZE(a)-1, 1, -1
-    swapped = .FALSE.
-    DO i = 1, j
-      IF (cust_locs(a(i),1) > cust_locs(a(i+1),1)) THEN
-        temp = a(i)
-        a(i) = a(i+1)
-        a(i+1) = temp
-        swapped = .TRUE.
-      END IF
+    DO j = SIZE(a)-1, 1, -1
+      swapped = .FALSE.
+      DO i = 1, j
+        IF (cust_locs(a(i),1) > cust_locs(a(i+1),1)) THEN
+          temp = a(i)
+          a(i) = a(i+1)
+          a(i+1) = temp
+          swapped = .TRUE.
+        END IF
+      END DO
+      IF (.NOT. swapped) EXIT
     END DO
-    IF (.NOT. swapped) EXIT
-  END DO
-END SUBROUTINE Bubble_Sort
+  END SUBROUTINE Bubble_Sort
+
+  !sets up the traveling salesman problem
+  SUBROUTINE setup_ts_sa()
+    INTEGER :: i
+
+    ts_simanneal%max_step=1000000
+    ts_simanneal%alpha=0.85
+    ts_simanneal%t_max=100
+    ts_simanneal%t_min=0
+    ts_simanneal%cool_opt='QuadMult'
+    ts_simanneal%mon_cool=.FALSE.
+    ALLOCATE(ts_simanneal%state_curr(num_customers))
+    DO i=1,num_customers
+      ts_simanneal%state_curr(i)=i
+    ENDDO
+    !point to a path length function that works with the SA type
+    ts_simanneal%energy => path_len_eg
+  ENDSUBROUTINE setup_ts_sa
+
+  !path length function for the energy calculation
+  FUNCTION path_len_eg(thisSA,state_ord)
+    CLASS(sa_comb_type),INTENT(INOUT) :: thisSA
+    INTEGER,DIMENSION(:),INTENT(IN) :: state_ord
+    REAL(8) :: path_len_eg
+
+    INTEGER :: i
+
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)i=thisSA%size_states
+
+    path_len_eg=0
+    DO i=1,SIZE(state_ord)-1
+      path_len_eg=path_len_eg+dist(cust_locs(state_ord(i),:),cust_locs(state_ord(i+1),:))
+    ENDDO
+  ENDFUNCTION path_len_eg
 END MODULE travel_sales
