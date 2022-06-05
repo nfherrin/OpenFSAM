@@ -1,14 +1,9 @@
 !simmulated annealing functions
 MODULE sim_anneal
-  USE globals
-  USE travel_sales
   IMPLICIT NONE
   PRIVATE
   PUBLIC sa_comb_type,sa_cont_type
 
-  REAL(8) :: alpha=0.0001,t_current,t_max=100,t_min=0,e_current,e_best
-  INTEGER,ALLOCATABLE :: s_current(:),s_neigh(:)
-  INTEGER :: step
   REAL,PARAMETER :: pi=4.D0*ATAN(1.D0)
 
 !the base simulated annealing solver type
@@ -23,8 +18,12 @@ MODULE sim_anneal
     REAL(8) :: t_max=100
     !minimum temperature
     REAL(8) :: t_min=0
+    !best energy
+    REAL(8) :: e_best=1.0D+307
     !cooling option
     CHARACTER(64) :: cool_opt=''
+    !whether cooling is monotonic or not
+    LOGICAL :: mon_cool=.TRUE.
     !Cooling schedule
     PROCEDURE(prototype_cooling),POINTER :: cool => NULL()
     CONTAINS
@@ -38,18 +37,32 @@ MODULE sim_anneal
     INTEGER, POINTER, DIMENSION(:) :: state_cur
     !combinatorial problem neighbor array after pertubation
     INTEGER, ALLOCATABLE, DIMENSION(:) :: state_neigh
+    !best energy state
+    INTEGER, ALLOCATABLE, DIMENSION(:) :: state_best
     !energy calculation
     PROCEDURE(prototype_eg_comb),POINTER :: energy => NULL()
+    CONTAINS
+      !neighbor retrieval
+      PROCEDURE,PASS :: get_neigh => get_neigh_comb
   ENDTYPE sa_comb_type
 
 !continuous simulated annealing type
   TYPE,EXTENDS(sa_type_base) :: sa_cont_type
     !continuous problem state array (for perturbing continuous problem values)
-    REAL, POINTER, DIMENSION(:) :: state_cur
-    !combinatorial problem neighbor array after pertubation
+    REAL(8), POINTER, DIMENSION(:) :: state_cur
+    !continuous problem neighbor array after pertubation
     REAL(8), ALLOCATABLE, DIMENSION(:) :: state_neigh
+    !best energy state
+    REAL(8), ALLOCATABLE, DIMENSION(:) :: state_best
+    !damping factor
+    REAL(8) :: damping=0.01
+    !upper and lower bounds, will be set to bounds of initial state if not changed
+    REAL(8) :: smin=0.0,smax=0.0
     !energy calculation
     PROCEDURE(prototype_eg_cont),POINTER :: energy => NULL()
+    CONTAINS
+      !neighbor retrieval
+      PROCEDURE,PASS :: get_neigh => get_neigh_cont
   ENDTYPE sa_cont_type
 
 !Simple abstract interface for a combinatorial energy computation subroutine
@@ -90,8 +103,8 @@ CONTAINS
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8) :: e_neigh
     INTEGER,ALLOCATABLE :: s_best(:)
-    INTEGER :: i,step_actual
-    REAL(8) :: temp_r,start,finish
+    INTEGER :: i,step
+    REAL(8) :: temp_r,start,finish,e_curr,t_curr
 
     !write(*,*)'**********************************************************************************'
     !write(*,*)'**********************************************************************************'
@@ -103,102 +116,146 @@ CONTAINS
 
     CALL set_cooling(thisSA)
 
-    !allocate the neighbor state variables and set the cooling
+    !allocate the neighbor state variables and set the cooling, also set initial energy
     SELECTTYPE(thisSA)
       TYPEIS(sa_comb_type)
-        ALLOCATE(thisSA%state_neigh(thisSA%size_states))
+        IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
+          ALLOCATE(thisSA%state_neigh(thisSA%size_states))
+        ENDIF
+        IF(.NOT. ALLOCATED(thisSA%state_best))THEN
+          ALLOCATE(thisSA%state_best(thisSA%size_states))
+        ENDIF
         thisSA%state_neigh=thisSA%state_cur
+        thisSA%state_best=thisSA%state_cur
+        !set energy to current energy
+        e_curr=thisSA%energy(thisSA%state_cur)
+        thisSA%e_best=e_curr
       TYPEIS(sa_cont_type)
-        ALLOCATE(thisSA%state_neigh(thisSA%size_states))
+        IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
+          ALLOCATE(thisSA%state_neigh(thisSA%size_states))
+        ENDIF
+        IF(.NOT. ALLOCATED(thisSA%state_best))THEN
+          ALLOCATE(thisSA%state_best(thisSA%size_states))
+        ENDIF
         thisSA%state_neigh=thisSA%state_cur
+        thisSA%state_best=thisSA%state_cur
+        !set energy to current energy
+        e_curr=thisSA%energy(thisSA%state_cur)
+        thisSA%e_best=e_curr
+        !set the bounds if not give
+        IF(thisSA%smax-thisSA%smin .LT. 1.0D-13)THEN
+          thisSA%smax=MAXVAL(thisSA%state_cur)
+          thisSA%smin=MINVAL(thisSA%state_cur)
+        ENDIF
     ENDSELECT
 
-    ALLOCATE(s_current(num_customers))
-    ALLOCATE(s_neigh(num_customers))
-    ALLOCATE(s_best(num_customers))
-
-    !set the initial conditions
-    t_current=t_max
-    DO i=1,num_customers
-      s_current(i)=i
-    ENDDO
-    s_best=s_current
-
-    e_current=path_len(s_current)
-    e_best=e_current
-
-    alpha=0.85
     step=0
-    step_actual=0
     CALL CPU_TIME(start)
-    DO WHILE(step .LE. thisSA%max_step .AND. t_current .GE. t_min)
+    !actual simulated annealing happens here
+    DO WHILE(step .LE. thisSA%max_step .AND. t_curr .GE. thisSA%t_min)
       step=step+1
-      step_actual=step_actual+1
       !get a new neighbor and compute energy
-      CALL get_neigh_comb()
       SELECTTYPE(thisSA)
         TYPEIS(sa_comb_type)
+          thisSA%state_neigh=thisSA%get_neigh(thisSA%state_cur)
           e_neigh=thisSA%energy(thisSA%state_neigh)
         TYPEIS(sa_cont_type)
+          thisSA%state_neigh=thisSA%get_neigh(thisSA%state_cur,thisSA%damping,thisSA%smax,thisSA%smin)
           e_neigh=thisSA%energy(thisSA%state_neigh)
       ENDSELECT
-      e_neigh=path_len(s_neigh)
       !check and see if we accept the new temperature (lower temps alwasy accepted)
       CALL random_number(temp_r)
-      IF(temp_r .LE. accept_prob(e_current,e_neigh))THEN
-        s_current=s_neigh
-        e_current=e_neigh
+      IF(temp_r .LE. accept_prob(e_curr,e_neigh,t_curr))THEN
+        SELECTTYPE(thisSA)
+          TYPEIS(sa_comb_type)
+            thisSA%state_cur=thisSA%state_neigh
+          TYPEIS(sa_cont_type)
+            thisSA%state_cur=thisSA%state_neigh
+        ENDSELECT
+        e_curr=e_neigh
       ELSE
         !otherwise reject the neighbor and do nothing
       ENDIF
       !cool the temperature
-      CALL temp_cool()
+      t_curr=thisSA%cool(thisSA%t_min,thisSA%t_max,thisSA%alpha,step,thisSA%max_step)
+      IF(.NOT. thisSA%mon_cool)t_curr=t_curr*(1.0+(e_curr-thisSA%e_best)/e_curr)
       !if it is the best energy, it's our new best value
-      IF(e_current .LT. e_best)THEN
-        e_best=e_current
-        s_best=s_current
-        !IF(step .GT. 100)step=step-100
-        !write(*,*)step_actual,step,e_best
+      IF(e_curr .LT. thisSA%e_best)THEN
+        thisSA%e_best=e_curr
+        SELECTTYPE(thisSA)
+          TYPEIS(sa_comb_type)
+            thisSA%state_best=thisSA%state_neigh
+          TYPEIS(sa_cont_type)
+            thisSA%state_best=thisSA%state_neigh
+        ENDSELECT
       ENDIF
-      !IF(MOD(step,1000) .EQ. 0)THEN
-      !  e_current=e_best
-      !  s_current=s_best
-      !ENDIF
-      !WRITE(*,*)t_current
     ENDDO
     CALL CPU_TIME(finish)
-
-    WRITE(*,'(A,ES16.8)',ADVANCE='NO')'iterations',(step_actual-1)*1.0
-    !WRITE(*,'(A,ES16.8)')'SA Minimum path length:',e_best
-    sa_best=e_best
-    !WRITE(*,'(A,1000I6)')'Minimum path:',s_best
-    !WRITE(*,'(A,ES16.8,A)')'Simulated annealing finished in: ',finish-start,' seconds'
-    DEALLOCATE(s_current,s_neigh,s_best)
-    thisSA%cool => NULL()
   ENDSUBROUTINE optimize
 
-  !get a new neighbor state
-  SUBROUTINE get_neigh_comb()
-    INTEGER :: j1,j2,temp_i
+  !get a new neighbor state for a combinatorial problem
+  FUNCTION get_neigh_comb(thisSA,s_curr)
+    CLASS(sa_comb_type),INTENT(INOUT) :: thisSA
+    INTEGER,INTENT(IN) :: s_curr(:)
+    INTEGER,DIMENSION(SIZE(s_curr)) :: get_neigh_comb
+
+    INTEGER :: j1,j2
     REAL(8) :: temp_r
-    s_neigh=s_current
+
+    get_neigh_comb=s_curr
     !get switch indeces
     DO
       CALL random_number(temp_r)
-      j1=1+FLOOR(num_customers*temp_r)
+      j1=1+FLOOR(SIZE(s_curr)*temp_r)
       CALL random_number(temp_r)
-      j2=1+FLOOR(num_customers*temp_r)
+      j2=1+FLOOR(SIZE(s_curr)*temp_r)
+      !make sure they're actually different
       IF(j1 .NE. j2)EXIT
     ENDDO
-    !set the new neighbor
-    temp_i=s_neigh(j1)
-    s_neigh(j1)=s_neigh(j2)
-    s_neigh(j2)=temp_i
-  ENDSUBROUTINE get_neigh_comb
+    !set the new neighbor by swapping those points
+    get_neigh_comb(j1)=s_curr(j2)
+    get_neigh_comb(j2)=s_curr(j1)
+  ENDFUNCTION get_neigh_comb
+
+  !get a new neighbor state for a continuous problem
+  FUNCTION get_neigh_cont(thisSA,s_curr,damping,smin,smax)
+    CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
+    REAL(8),INTENT(IN) :: s_curr(:)
+    REAL(8),INTENT(IN),OPTIONAL :: damping,smin,smax
+    REAL(8),DIMENSION(SIZE(s_curr)) :: get_neigh_cont
+
+    REAL(8) :: temp_r,damp_app,max_ch,min_ch
+    INTEGER :: i
+
+    !set the damping factor and bounds
+    IF(PRESENT(damping))THEN
+      damp_app=damping
+    ELSE
+      damp_app=1.0
+    ENDIF
+    IF(PRESENT(smin))THEN
+      min_ch=smin
+    ELSE
+      min_ch=MINVAL(s_curr)
+    ENDIF
+    IF(PRESENT(smax))THEN
+      max_ch=smax
+    ELSE
+      max_ch=MAXVAL(s_curr)
+    ENDIF
+
+    DO i=1,SIZE(s_curr)
+      CALL random_number(temp_r)
+      !perturb the state
+      get_neigh_cont(i)=s_curr(i)+(temp_r-0.5)*damp_app
+      !make sure it doesn't go out of bounds
+      get_neigh_cont(i)=MAX(MIN(get_neigh_cont(i),max_ch),min_ch)
+    ENDDO
+  ENDFUNCTION get_neigh_cont
 
   !function for the acceptance probability
-  FUNCTION accept_prob(e_current,e_neigh)
-    REAL(8),INTENT(IN) :: e_current,e_neigh
+  FUNCTION accept_prob(e_current,e_neigh,t_current)
+    REAL(8),INTENT(IN) :: e_current,e_neigh,t_current
     REAL(8) :: accept_prob
     REAL(8) :: delta_e
 
@@ -211,16 +268,6 @@ CONTAINS
       accept_prob=EXP(-delta_e/t_current)
     ENDIF
   ENDFUNCTION accept_prob
-
-  !non-monotonic adaptive cooling schedule
-  SUBROUTINE temp_cool()
-    REAL(8) :: mu
-    !compute the linear value
-    t_current=t_max/(1.0+alpha*step**2)
-    !now the non-monotonic factorization
-    mu=1.0+(e_current-e_best)/e_current
-    t_current=mu*t_current
-  ENDSUBROUTINE temp_cool
 
   !set the cooling schedule
   SUBROUTINE set_cooling(thisSA)
