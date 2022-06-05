@@ -79,10 +79,10 @@ $(EXE): $(OBJ) $(CONT_OBJ) $(LIB_OBJ)
 #Dependency List
 #Use [gfortran -M -cpp *.f95] repeatedly until clean compile to update rules below
 #-----------------------------------------------------------------------------------
-globals.o globals.mod: globals.f95
+globals.o globals.mod: globals.f95 sim_anneal.mod
 infuncs.o infuncs.mod: infuncs.f95 globals.mod
 main.o: main.f95 globals.mod infuncs.mod outfuncs.mod sim_anneal.mod \
  travel_sales.mod
 outfuncs.o outfuncs.mod: outfuncs.f95 globals.mod
-sim_anneal.o sim_anneal.mod: sim_anneal.f95 globals.mod travel_sales.mod
+sim_anneal.o sim_anneal.mod: sim_anneal.f95
 travel_sales.o travel_sales.mod: travel_sales.f95 globals.mod

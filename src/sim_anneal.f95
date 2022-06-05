@@ -106,19 +106,12 @@ CONTAINS
     INTEGER :: i,step
     REAL(8) :: temp_r,start,finish,e_curr,t_curr
 
-    !write(*,*)'**********************************************************************************'
-    !write(*,*)'**********************************************************************************'
-    !write(*,*)'**********************************************************************************'
-    !write(*,*)'**********************************************************************************'
-    !write(*,*)'**********************************************************************************'
-    !write(*,*)'performing simulated annealing'
-    !write(*,*)'**********************************************************************************'
-
     CALL set_cooling(thisSA)
 
     !allocate the neighbor state variables and set the cooling, also set initial energy
     SELECTTYPE(thisSA)
       TYPEIS(sa_comb_type)
+        thisSA%size_states=SIZE(thisSA%state_curr)
         IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
           ALLOCATE(thisSA%state_neigh(thisSA%size_states))
         ENDIF
@@ -131,6 +124,7 @@ CONTAINS
         e_curr=thisSA%energy(thisSA%state_curr)
         thisSA%e_best=e_curr
       TYPEIS(sa_cont_type)
+        thisSA%size_states=SIZE(thisSA%state_curr)
         IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
           ALLOCATE(thisSA%state_neigh(thisSA%size_states))
         ENDIF
@@ -149,6 +143,7 @@ CONTAINS
         ENDIF
     ENDSELECT
 
+    t_curr=thisSA%t_max
     step=0
     CALL CPU_TIME(start)
     !actual simulated annealing happens here
@@ -163,7 +158,7 @@ CONTAINS
           thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr,thisSA%damping,thisSA%smax,thisSA%smin)
           e_neigh=thisSA%energy(thisSA%state_neigh)
       ENDSELECT
-      !check and see if we accept the new temperature (lower temps alwasy accepted)
+      !check and see if we accept the new temperature (lower temps always accepted)
       CALL random_number(temp_r)
       IF(temp_r .LE. accept_prob(e_curr,e_neigh,t_curr))THEN
         SELECTTYPE(thisSA)
@@ -182,6 +177,7 @@ CONTAINS
       !if it is the best energy, it's our new best value
       IF(e_curr .LT. thisSA%e_best)THEN
         thisSA%e_best=e_curr
+        write(*,*)step,thisSA%e_best
         SELECTTYPE(thisSA)
           TYPEIS(sa_comb_type)
             thisSA%state_best=thisSA%state_neigh

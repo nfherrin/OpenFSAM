@@ -36,7 +36,7 @@ CONTAINS
 
     !find minimum path length brute force wise (only if estimated time is under 100 seconds)
     est_time=num_perms*num_customers*prob_dim*2.0E-09
-    !WRITE(*,'(A,ES16.8,A)')'Estimated brute force calculation time ',est_time,' seconds'
+    WRITE(*,'(A,ES16.8,A)')'Estimated brute force calculation time ',est_time,' seconds'
     sort_best=0
     IF(prob_dim .EQ. 1)THEN
       min_ord=glob_ord
@@ -134,5 +134,34 @@ CONTAINS
 
   !sets up the traveling salesman problem
   SUBROUTINE setup_ts_sa()
+    INTEGER :: i
+
+    ts_simanneal%size_states=num_customers
+    ts_simanneal%max_step=100000000
+    ts_simanneal%alpha=0.85
+    ts_simanneal%t_max=100
+    ts_simanneal%t_min=0
+    ts_simanneal%cool_opt='QuadMult'
+    ts_simanneal%mon_cool=.FALSE.
+    ALLOCATE(ts_simanneal%state_curr(num_customers))
+    DO i=1,num_customers
+      ts_simanneal%state_curr(i)=i
+    ENDDO
+    !point to a path length function that works with the SA type
+    ts_simanneal%energy => path_len_eg
   ENDSUBROUTINE setup_ts_sa
+
+  !path length function for the energy calculation
+  FUNCTION path_len_eg(thisSA,state_ord)
+    CLASS(sa_comb_type),INTENT(INOUT) :: thisSA
+    INTEGER,DIMENSION(:),INTENT(IN) :: state_ord
+    REAL(8) :: path_len_eg
+
+    INTEGER :: i
+
+    path_len_eg=0
+    DO i=1,SIZE(state_ord)-1
+      path_len_eg=path_len_eg+dist(cust_locs(state_ord(i),:),cust_locs(state_ord(i+1),:))
+    ENDDO
+  ENDFUNCTION path_len_eg
 END MODULE travel_sales

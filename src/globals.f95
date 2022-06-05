@@ -1,5 +1,6 @@
 !globals module
 MODULE globals
+  USE sim_anneal
   IMPLICIT NONE
 
   !customer locations
@@ -13,5 +14,8 @@ MODULE globals
 
   !best from sa and sort
   REAL(8) :: sa_best,sort_best
+
+  !simulated annealing object for the traveling salesman problem
+  TYPE(sa_comb_type) :: ts_simanneal
 CONTAINS
 END MODULE globals
