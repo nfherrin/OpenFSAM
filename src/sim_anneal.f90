@@ -12,6 +12,8 @@ MODULE sim_anneal
     INTEGER :: size_states=0
     !maximum number of SA iterations
     INTEGER :: max_step=100
+    !total number of steps it took
+    INTEGER :: total_steps=0
     !alpha value for cooling
     REAL(8) :: alpha=0.01
     !maximum temperature
@@ -177,7 +179,6 @@ CONTAINS
       !if it is the best energy, it's our new best value
       IF(e_curr .LT. thisSA%e_best)THEN
         thisSA%e_best=e_curr
-        write(*,*)step,thisSA%e_best
         SELECTTYPE(thisSA)
           TYPEIS(sa_comb_type)
             thisSA%state_best=thisSA%state_neigh
@@ -187,6 +188,8 @@ CONTAINS
       ENDIF
     ENDDO
     CALL CPU_TIME(finish)
+
+    thisSA%total_steps=step-1
 
     !set to the best state we ended up finding.
     IF(e_curr .LT. thisSA%e_best)THEN

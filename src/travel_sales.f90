@@ -32,7 +32,7 @@ CONTAINS
       glob_ord(i)=i
     ENDDO
 
-    !WRITE(*,'(A,ES16.8)')'Number of possible paths: ',num_perms
+    WRITE(*,'(A,ES16.8)')'Number of possible paths: ',num_perms
 
     !find minimum path length brute force wise (only if estimated time is under 100 seconds)
     est_time=num_perms*num_customers*prob_dim*2.0E-09
@@ -137,7 +137,7 @@ CONTAINS
     INTEGER :: i
 
     ts_simanneal%size_states=num_customers
-    ts_simanneal%max_step=100000000
+    ts_simanneal%max_step=1000000
     ts_simanneal%alpha=0.85
     ts_simanneal%t_max=100
     ts_simanneal%t_min=0

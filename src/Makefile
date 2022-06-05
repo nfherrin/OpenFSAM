@@ -20,20 +20,20 @@ coverage: OPT := -O0 -g --coverage
 #-----------------------------------------------------------------------------------
 
 SRC := \
-				main.f95 	      	\
-				globals.f95	\
-				infuncs.f95	\
-				sim_anneal.f95	\
-				travel_sales.f95	\
-				outfuncs.f95
+				main.f90 	      	\
+				globals.f90	\
+				infuncs.f90	\
+				sim_anneal.f90	\
+				travel_sales.f90	\
+				outfuncs.f90
 
-OBJ := $(SRC:.f95=.o)
+OBJ := $(SRC:.f90=.o)
 MOD := $(OBJ:.o=.mod)
 
 FILTER := \
 
-OBJ_FILTER := $(FILTER:.f95=.o)
-MOD_FILTER := $(FILTER:.f95=.mod)
+OBJ_FILTER := $(FILTER:.f90=.o)
+MOD_FILTER := $(FILTER:.f90=.mod)
 
 #-----------------------------------------------------------------------------------
 #Phony targets for cleaning and building
@@ -65,10 +65,10 @@ reset: clean
 #-----------------------------------------------------------------------------------
 #Generics for source files
 #-----------------------------------------------------------------------------------
-$(filter-out $(OBJ_FILTER), $(OBJ)): %.o:	%.f95
+$(filter-out $(OBJ_FILTER), $(OBJ)): %.o:	%.f90
 	$(FC) -c $(OPT) $<
 
-$(filter-out $(MOD_FILTER), $(MOD)):	%.mod:	%.f95
+$(filter-out $(MOD_FILTER), $(MOD)):	%.mod:	%.f90
 	$(FC) -c $(OPT) $<
 
 $(EXE): $(OBJ) $(CONT_OBJ) $(LIB_OBJ)
@@ -77,12 +77,12 @@ $(EXE): $(OBJ) $(CONT_OBJ) $(LIB_OBJ)
 
 #-----------------------------------------------------------------------------------
 #Dependency List
-#Use [gfortran -M -cpp *.f95] repeatedly until clean compile to update rules below
+#Use [gfortran -M -cpp *.f90] repeatedly until clean compile to update rules below
 #-----------------------------------------------------------------------------------
-globals.o globals.mod: globals.f95 sim_anneal.mod
-infuncs.o infuncs.mod: infuncs.f95 globals.mod
-main.o: main.f95 globals.mod infuncs.mod outfuncs.mod sim_anneal.mod \
+globals.o globals.mod: globals.f90 sim_anneal.mod
+infuncs.o infuncs.mod: infuncs.f90 globals.mod
+main.o: main.f90 globals.mod infuncs.mod outfuncs.mod sim_anneal.mod \
  travel_sales.mod
-outfuncs.o outfuncs.mod: outfuncs.f95 globals.mod
-sim_anneal.o sim_anneal.mod: sim_anneal.f95
-travel_sales.o travel_sales.mod: travel_sales.f95 globals.mod
+outfuncs.o outfuncs.mod: outfuncs.f90 globals.mod
+sim_anneal.o sim_anneal.mod: sim_anneal.f90
+travel_sales.o travel_sales.mod: travel_sales.f90 globals.mod
