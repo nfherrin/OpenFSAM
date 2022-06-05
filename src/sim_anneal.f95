@@ -9,6 +9,7 @@ MODULE sim_anneal
   REAL(8) :: alpha=0.0001,t_current,t_max=100,t_min=0,e_current,e_best
   INTEGER,ALLOCATABLE :: s_current(:),s_neigh(:)
   INTEGER :: step
+  REAL,PARAMETER :: pi=4.D0*ATAN(1.D0)
 
 !the base simulated annealing solver type
   TYPE,ABSTRACT :: sa_type_base
@@ -234,18 +235,16 @@ CONTAINS
         thisSA%cool => log_mult_cool
       CASE('QuadMult')
         thisSA%cool => quad_mult_cool
+      CASE('LinAdd')
+        thisSA%cool => lin_add_cool
+      CASE('QuadAdd')
+        thisSA%cool => quad_add_cool
+      CASE('ExpAdd')
+        thisSA%cool => exp_add_cool
+      CASE('TrigAdd')
+        thisSA%cool => trig_add_cool
     ENDSELECT
   ENDSUBROUTINE set_cooling
-
-  !natural log exponential multiplicative cooling
-  FUNCTION exp_mult_cool(thisSA,tmin,tmax,alpha,k,n)
-    CLASS(sa_type_base),INTENT(INOUT) :: thisSA
-    REAL(8),INTENT(IN) :: tmin,tmax,alpha
-    INTEGER,INTENT(IN) :: k,n
-    REAL(8) :: exp_mult_cool
-
-    exp_mult_cool=tmax*alpha**k
-  ENDFUNCTION exp_mult_cool
 
   !linear multiplicative cooling
   FUNCTION lin_mult_cool(thisSA,tmin,tmax,alpha,k,n)
@@ -257,17 +256,27 @@ CONTAINS
     lin_mult_cool=tmax-alpha*k
   ENDFUNCTION lin_mult_cool
 
-  !linear multiplicative cooling
+  !natural log exponential multiplicative cooling
+  FUNCTION exp_mult_cool(thisSA,tmin,tmax,alpha,k,n)
+    CLASS(sa_type_base),INTENT(INOUT) :: thisSA
+    REAL(8),INTENT(IN) :: tmin,tmax,alpha
+    INTEGER,INTENT(IN) :: k,n
+    REAL(8) :: exp_mult_cool
+
+    exp_mult_cool=tmax*alpha**k
+  ENDFUNCTION exp_mult_cool
+
+  !logarithmic multiplicative cooling
   FUNCTION log_mult_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: log_mult_cool
 
-    log_mult_cool=tmax/(1.0+alpha*LOG(k+1.0))
+    log_mult_cool=tmax/(1.0+alpha*LOG10(k+1.0))
   ENDFUNCTION log_mult_cool
 
-  !linear multiplicative cooling
+  !quadratic multiplicative cooling
   FUNCTION quad_mult_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -276,4 +285,44 @@ CONTAINS
 
     quad_mult_cool=tmax/(1.0+alpha*k**2)
   ENDFUNCTION quad_mult_cool
+
+  !linear additive cooling
+  FUNCTION lin_add_cool(thisSA,tmin,tmax,alpha,k,n)
+    CLASS(sa_type_base),INTENT(INOUT) :: thisSA
+    REAL(8),INTENT(IN) :: tmin,tmax,alpha
+    INTEGER,INTENT(IN) :: k,n
+    REAL(8) :: lin_add_cool
+
+    lin_add_cool=tmin+(tmax-tmin)*(n*1.0-k)/(n*1.0)
+  ENDFUNCTION lin_add_cool
+
+  !quadratic additive cooling
+  FUNCTION quad_add_cool(thisSA,tmin,tmax,alpha,k,n)
+    CLASS(sa_type_base),INTENT(INOUT) :: thisSA
+    REAL(8),INTENT(IN) :: tmin,tmax,alpha
+    INTEGER,INTENT(IN) :: k,n
+    REAL(8) :: quad_add_cool
+
+    quad_add_cool=tmin+(tmax-tmin)*((n*1.0-k)/(n*1.0))**2
+  ENDFUNCTION quad_add_cool
+
+  !exponential additive cooling
+  FUNCTION exp_add_cool(thisSA,tmin,tmax,alpha,k,n)
+    CLASS(sa_type_base),INTENT(INOUT) :: thisSA
+    REAL(8),INTENT(IN) :: tmin,tmax,alpha
+    INTEGER,INTENT(IN) :: k,n
+    REAL(8) :: exp_add_cool
+
+    exp_add_cool=tmin+(tmax-tmin)/(1.0+EXP(2.0*LOG(tmax-tmin)/(n*1.0))*(k-0.5*n))
+  ENDFUNCTION exp_add_cool
+
+  !trigonometric additive cooling
+  FUNCTION trig_add_cool(thisSA,tmin,tmax,alpha,k,n)
+    CLASS(sa_type_base),INTENT(INOUT) :: thisSA
+    REAL(8),INTENT(IN) :: tmin,tmax,alpha
+    INTEGER,INTENT(IN) :: k,n
+    REAL(8) :: trig_add_cool
+
+    trig_add_cool=tmin+0.5*(tmax-tmin)*(1.0+COS(k*pi/n))
+  ENDFUNCTION trig_add_cool
 END MODULE sim_anneal
