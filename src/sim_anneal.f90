@@ -67,7 +67,7 @@ MODULE sim_anneal
       PROCEDURE,PASS :: get_neigh => get_neigh_cont
   ENDTYPE sa_cont_type
 
-!Simple abstract interface for a combinatorial energy computation subroutine
+!Simple abstract interface for a combinatorial energy computation function
   ABSTRACT INTERFACE
     FUNCTION prototype_eg_comb(thisSA,state_val)
       IMPORT :: sa_comb_type
@@ -77,7 +77,7 @@ MODULE sim_anneal
     ENDFUNCTION prototype_eg_comb
   ENDINTERFACE
 
-!Simple abstract interface for a continuous energy computation subroutine
+!Simple abstract interface for a continuous energy computation function
   ABSTRACT INTERFACE
     FUNCTION prototype_eg_cont(thisSA,state_val)
       IMPORT :: sa_cont_type
@@ -87,7 +87,7 @@ MODULE sim_anneal
     ENDFUNCTION prototype_eg_cont
   ENDINTERFACE
 
-!Simple abstract interface for a continuous energy computation subroutine
+!Simple abstract interface for a cooling function
   ABSTRACT INTERFACE
     FUNCTION prototype_cooling(thisSA,tmin,tmax,alpha,k,n)
       IMPORT :: sa_type_base
@@ -100,7 +100,7 @@ MODULE sim_anneal
 
 CONTAINS
 
-  !simulate annealing for the traveling salesman
+  !optimize through simulated annealing
   SUBROUTINE optimize(thisSA)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8) :: e_neigh
@@ -137,7 +137,7 @@ CONTAINS
         !set energy to current energy
         e_curr=thisSA%energy(thisSA%state_curr)
         thisSA%e_best=e_curr
-        !set the bounds if not give
+        !set the bounds if not given
         IF(thisSA%smax-thisSA%smin .LT. 1.0D-13)THEN
           thisSA%smax=MAXVAL(thisSA%state_curr)
           thisSA%smin=MINVAL(thisSA%state_curr)
@@ -191,14 +191,12 @@ CONTAINS
     thisSA%total_steps=step-1
 
     !set to the best state we ended up finding.
-    IF(e_curr .LT. thisSA%e_best)THEN
-      SELECTTYPE(thisSA)
-        TYPEIS(sa_comb_type)
-          thisSA%state_curr=thisSA%state_best
-        TYPEIS(sa_cont_type)
-          thisSA%state_curr=thisSA%state_best
-      ENDSELECT
-    ENDIF
+    SELECTTYPE(thisSA)
+      TYPEIS(sa_comb_type)
+        thisSA%state_curr=thisSA%state_best
+      TYPEIS(sa_cont_type)
+        thisSA%state_curr=thisSA%state_best
+    ENDSELECT
   ENDSUBROUTINE optimize
 
   !function for the acceptance probability
