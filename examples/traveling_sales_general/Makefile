@@ -1,6 +1,6 @@
 # Defining variables
 FC:=gfortran
-EXE:=travel_sales
+EXE:=ts_gen
 EXT:=.exe
 
 all:			TYPE :=
@@ -14,6 +14,11 @@ catch:    OPT := -O0 -g -Wall -W -Wsurprising -Werror
 coverage: OPT := -O0 -g --coverage
 
 #-----------------------------------------------------------------------------------
+#Directory Paths
+#-----------------------------------------------------------------------------------
+SIMANN := ../../src
+
+#-----------------------------------------------------------------------------------
 #Add source files as necessary
 #If the files are not comiled using the genieric rules, add commands under their
 #rule declaration. Add these items to FILTER
@@ -23,7 +28,6 @@ SRC := \
 				main.f90 	      	\
 				globals.f90	\
 				infuncs.f90	\
-				sim_anneal.f90	\
 				travel_sales.f90	\
 				outfuncs.f90
 
@@ -34,6 +38,15 @@ FILTER := \
 
 OBJ_FILTER := $(FILTER:.f90=.o)
 MOD_FILTER := $(FILTER:.f90=.mod)
+
+#-----------------------------------------------------------------------------------
+#Add simple compile SIMANN files
+#-----------------------------------------------------------------------------------
+SIMANN_SRC := $(SIMANN)/sim_anneal.f90
+
+SIMANN_OBJ := $(patsubst %.f90,%.o,$(notdir $(SIMANN_SRC)))
+
+SIMANN_MOD := $(SIMANN_OBJ:.o=.mod)
 
 #-----------------------------------------------------------------------------------
 #Phony targets for cleaning and building
@@ -52,15 +65,15 @@ coverage: $(EXE)
 
 #Intended to clean up compilation artifacts but leave executable & coverage
 clean:
-	rm -f $(OBJ) $(CONT_OBJ) $(LIB_OBJ)
-	rm -f $(MOD) $(CONT_MOD) $(LIB_MOD)
+	rm -f $(OBJ) $(SIMANN_OBJ) $(LIB_OBJ)
+	rm -f $(MOD) $(SIMANN_MOD) $(LIB_MOD)
 	rm -f $(COMP_DEP)
 
 #Intended to reset directory to fresh state with no exe or artifacts
 reset: clean
 	rm -f *.gcno *.gcda *.o *.mod
 	rm -f -r $(EXE)*.dSYM
-	rm -f ../$(EXE)*
+	rm -f *.exe
 
 #-----------------------------------------------------------------------------------
 #Generics for source files
@@ -71,9 +84,17 @@ $(filter-out $(OBJ_FILTER), $(OBJ)): %.o:	%.f90
 $(filter-out $(MOD_FILTER), $(MOD)):	%.mod:	%.f90
 	$(FC) -c $(OPT) $<
 
-$(EXE): $(OBJ) $(CONT_OBJ) $(LIB_OBJ)
-	$(FC) -o $@$(TYPE)$(EXT) $(OPT) $(OBJ) $(CONT_OBJ) $(LIB_OBJ)
-	mv ./$(EXE)$(TYPE)$(EXT) ../
+$(EXE): $(OBJ) $(SIMANN_OBJ) $(LIB_OBJ)
+	$(FC) -o $@$(TYPE)$(EXT) $(OPT) $(OBJ) $(SIMANN_OBJ) $(LIB_OBJ)
+
+#-----------------------------------------------------------------------------------
+#Generics for contrib files
+#-----------------------------------------------------------------------------------
+$(SIMANN_OBJ): %.o: $(filter %.f90, $(SIMANN_SRC))
+	$(FC) -c $(OPT) $^
+
+$(SIMANN_MOD):	%.mod:	$(filter %.f90, $(SIMANN_SRC))
+	$(FC) -c $(OPT) $^
 
 #-----------------------------------------------------------------------------------
 #Dependency List
@@ -84,5 +105,4 @@ infuncs.o infuncs.mod: infuncs.f90 globals.mod
 main.o: main.f90 globals.mod infuncs.mod outfuncs.mod sim_anneal.mod \
  travel_sales.mod
 outfuncs.o outfuncs.mod: outfuncs.f90 globals.mod
-sim_anneal.o sim_anneal.mod: sim_anneal.f90
 travel_sales.o travel_sales.mod: travel_sales.f90 globals.mod
