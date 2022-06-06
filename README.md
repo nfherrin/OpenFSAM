@@ -1,4 +1,6 @@
 # openSimAnn
+##Description
+---
 A Fortran based open source simulated annealing utility.
 
 This utility consists of a single module that can be generally assigned to solve a [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) optimization problem.
@@ -116,4 +118,20 @@ With the traveling salesman problem setup and simulated annealing initialization
   CALL ts_simanneal%optimize()
 ```
 
-Which can then view the optimal state array in the form of `ts_simanneal%state_best` with an energy of `ts_simanneal%e_best`.
+Which can then view the optimal state array in the form of `ts_simanneal%state_best` with an energy (path length) of `ts_simanneal%e_best`.
+
+---
+## Simulated Annealing for Simulated Annealing
+---
+
+The traveling salesman problem is the problem for which simulated annealing was originally created (or at least, this was the application where it was first named as such).
+As such, optimization of the traveling salesman problem is one of the common problems to demonstrate the effectiveness of simulated annealing.
+Energy is typically expressed as some monotonically increasing function of the total path length, oftentimes simply the path length itself.
+Since it is a combinatorial problem, damping factors and minimums/maximum state values are not a part of the annealing problem.
+If we fix the energy function (to just the path length), then for a multiplicative cooling schedule the effectiveness will be determined by the maximum temperature, the minimum temperature, and the alpha factor (assuming we set a sufficiently large number of steps that the minimum temperature is reached).
+Well this is then a continuous optimization problem, figuring out which temperature bounds and which alpha factors provide the optimal simulated annealing for a given traveling salesman problem size.
+Similarly an additive cooling schedule will depend on the number of steps and the temperature bounds (but not on alpha).
+
+One of the issues is that determining how good the result is can be difficult for large traveling salesman problems.
+However, it can be noticed that traveling salesman problems look identical to a simulated annealing algorithm regardless of dimensionality since the only factor in the energy is total path length.
+As such, simulated annealing can be used on a 1D traveling salesman problem to compare to the actual optimal solution energy found using a sort.
