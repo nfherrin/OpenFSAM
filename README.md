@@ -1,4 +1,6 @@
 # openSimAnn
+##Description
+---
 A Fortran based open source simulated annealing utility.
 
 This utility consists of a single module that can be generally assigned to solve a [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) optimization problem.
@@ -39,7 +41,9 @@ A brief explanation of the user initialized variables:
     If the cooling schedule is monotonic and additive, this temperature will always be reached before stopping.
     If the cooling schedule is non-monotonic and/or multiplicative, then the annealing may reach the maximum number of steps and terminate before this temperature is reached.
   5. The cooling schedule is an equation used to determine how much to cool the temperature by each step.
-    Available cooling schedules are taken from [A Comparison of Cooling Schedules for Simulated Annealing](http://what-when-how.com/artificial-intelligence/a-comparison-of-cooling-schedules-for-simulated-annealing-artificial-intelligence/) and are:
+    If they so desire, the user may also specify a custom cooling schedule beyond these by specifying the type as `custom` and pointing `<sa_object>%cool` to their desired cooling function.
+    For specifying a custom cooling schedule, the generic cooling function interface takes in minimum temperature, maximum temperature, alpha, current step, and maximum number of steps.
+    Available pre-made cooling schedules are taken from [*"A Comparison of Cooling Schedules for Simulated Annealing"*](http://what-when-how.com/artificial-intelligence/a-comparison-of-cooling-schedules-for-simulated-annealing-artificial-intelligence/) and are:
       1. `LinMult` - Linear multiplicative cooling
       2. `ExpMult` - Exponential multiplicative cooling
       3. `LogMult` - Logarithmic multiplicative cooling
@@ -48,8 +52,6 @@ A brief explanation of the user initialized variables:
       6. `QuadAdd` - Quadratic additive cooling
       7. `ExpAdd` - Exponential additive cooling
       8. `TrigAdd` - Trigonometric additive cooling
-    If they so desire, the user may also specify a custom cooling schedule beyond these by specifying the type as `custom` and pointing `<sa_object>%cool` to their desired cooling function.
-    For specifying a custom cooling schedule, the generic cooling function interface takes in minimum temperature, maximum temperature, alpha, current step, and maximum number of steps.
   6. If the cooling is monotonic then the selected schedule alone is used.
     Otherwise the cooling result is multiplied by mu at each step, as described in the cooling reference.
   7. The initial guess state variable is the set and values of parameters that the annealing routine perturbs and then computes the energy of in order to optimize.
@@ -68,7 +70,7 @@ A brief explanation of the user initialized variables:
 The user may now use the simulated annealing optimization in their code by calling `<sa_object>%optimize`.
 This subroutine results in the optimal state array found stored in `<sa_object>%state_best` and the energy of that state is stored in `<sa_object>%e_best`.
 
-An example of usage of this utility is given in `examples/traveling_sales_general` in which simulated annealing is used to optimize a traveling salesman problem.
+An example of usage of this utility is given in `examples/traveling_sales_general/` in which simulated annealing is used to optimize a traveling salesman problem.
 The simulated annealing object is defined in `globals.f90` as
 ```
 TYPE(sa_comb_type) :: ts_simanneal
@@ -116,4 +118,20 @@ With the traveling salesman problem setup and simulated annealing initialization
   CALL ts_simanneal%optimize()
 ```
 
-Which can then view the optimal state array in the form of `ts_simanneal%state_best` with an energy of `ts_simanneal%e_best`.
+Which can then view the optimal state array in the form of `ts_simanneal%state_best` with an energy (path length) of `ts_simanneal%e_best`.
+
+---
+## Simulated Annealing for Simulated Annealing
+---
+
+The traveling salesman problem is the problem for which simulated annealing was originally created (or at least, this was the application where it was first named as such).
+As such, optimization of the traveling salesman problem is one of the common problems to demonstrate the effectiveness of simulated annealing.
+Energy is typically expressed as some monotonically increasing function of the total path length, oftentimes simply the path length itself.
+Since it is a combinatorial problem, damping factors and minimums/maximum state values are not a part of the annealing problem.
+If we fix the energy function (to just the path length), then for a multiplicative cooling schedule the effectiveness will be determined by the maximum temperature, the minimum temperature, and the alpha factor (assuming we set a sufficiently large number of steps that the minimum temperature is reached).
+Well this is then a continuous optimization problem, figuring out which temperature bounds and which alpha factors provide the optimal simulated annealing for a given traveling salesman problem size.
+Similarly an additive cooling schedule will depend on the number of steps and the temperature bounds (but not on alpha).
+
+One of the issues is that determining how good the result is can be difficult for large traveling salesman problems.
+However, it can be noticed that traveling salesman problems look identical to a simulated annealing algorithm regardless of dimensionality since the only factor in the energy is total path length.
+As such, simulated annealing can be used on a 1D traveling salesman problem to compare to the actual optimal solution energy found using a sort.

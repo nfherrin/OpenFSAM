@@ -67,7 +67,7 @@ MODULE sim_anneal
       PROCEDURE,PASS :: get_neigh => get_neigh_cont
   ENDTYPE sa_cont_type
 
-!Simple abstract interface for a combinatorial energy computation subroutine
+!Simple abstract interface for a combinatorial energy computation function
   ABSTRACT INTERFACE
     FUNCTION prototype_eg_comb(thisSA,state_val)
       IMPORT :: sa_comb_type
@@ -77,7 +77,7 @@ MODULE sim_anneal
     ENDFUNCTION prototype_eg_comb
   ENDINTERFACE
 
-!Simple abstract interface for a continuous energy computation subroutine
+!Simple abstract interface for a continuous energy computation function
   ABSTRACT INTERFACE
     FUNCTION prototype_eg_cont(thisSA,state_val)
       IMPORT :: sa_cont_type
@@ -87,7 +87,7 @@ MODULE sim_anneal
     ENDFUNCTION prototype_eg_cont
   ENDINTERFACE
 
-!Simple abstract interface for a continuous energy computation subroutine
+!Simple abstract interface for a cooling function
   ABSTRACT INTERFACE
     FUNCTION prototype_cooling(thisSA,tmin,tmax,alpha,k,n)
       IMPORT :: sa_type_base
@@ -100,7 +100,7 @@ MODULE sim_anneal
 
 CONTAINS
 
-  !simulate annealing for the traveling salesman
+  !optimize through simulated annealing
   SUBROUTINE optimize(thisSA)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8) :: e_neigh
@@ -137,7 +137,7 @@ CONTAINS
         !set energy to current energy
         e_curr=thisSA%energy(thisSA%state_curr)
         thisSA%e_best=e_curr
-        !set the bounds if not give
+        !set the bounds if not given
         IF(thisSA%smax-thisSA%smin .LT. 1.0D-13)THEN
           thisSA%smax=MAXVAL(thisSA%state_curr)
           thisSA%smin=MINVAL(thisSA%state_curr)
@@ -174,7 +174,6 @@ CONTAINS
       ENDIF
       !cool the temperature
       t_curr=thisSA%cool(thisSA%t_min,thisSA%t_max,thisSA%alpha,step,thisSA%max_step)
-      IF(.NOT. thisSA%mon_cool)t_curr=t_curr*(1.0+(e_curr-thisSA%e_best)/e_curr)
       !if it is the best energy, it's our new best value
       IF(e_curr .LT. thisSA%e_best)THEN
         thisSA%e_best=e_curr
@@ -185,20 +184,19 @@ CONTAINS
             thisSA%state_best=thisSA%state_neigh
         ENDSELECT
       ENDIF
+      IF(.NOT. thisSA%mon_cool)t_curr=t_curr*(1.0+(e_curr-thisSA%e_best)/e_curr)
     ENDDO
     CALL CPU_TIME(finish)
 
     thisSA%total_steps=step-1
 
     !set to the best state we ended up finding.
-    IF(e_curr .LT. thisSA%e_best)THEN
-      SELECTTYPE(thisSA)
-        TYPEIS(sa_comb_type)
-          thisSA%state_curr=thisSA%state_best
-        TYPEIS(sa_cont_type)
-          thisSA%state_curr=thisSA%state_best
-      ENDSELECT
-    ENDIF
+    SELECTTYPE(thisSA)
+      TYPEIS(sa_comb_type)
+        thisSA%state_curr=thisSA%state_best
+      TYPEIS(sa_cont_type)
+        thisSA%state_curr=thisSA%state_best
+    ENDSELECT
   ENDSUBROUTINE optimize
 
   !function for the acceptance probability
@@ -226,7 +224,7 @@ CONTAINS
     INTEGER :: j1,j2
     REAL(8) :: temp_r
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)temp_r=thisSA%e_best
 
     get_neigh_comb=s_curr
@@ -245,7 +243,7 @@ CONTAINS
   ENDFUNCTION get_neigh_comb
 
   !get a new neighbor state for a continuous problem
-  FUNCTION get_neigh_cont(thisSA,s_curr,damping,smin,smax)
+  FUNCTION get_neigh_cont(thisSA,s_curr,damping,smax,smin)
     CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: s_curr(:)
     REAL(8),INTENT(IN),OPTIONAL :: damping
@@ -256,7 +254,7 @@ CONTAINS
     REAL(8) :: temp_r,max_ch,min_ch
     INTEGER :: i
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)temp_r=thisSA%e_best
 
     !set the damping factor and bounds
@@ -322,7 +320,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: lin_mult_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)lin_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     lin_mult_cool=tmax-alpha*k
@@ -335,7 +333,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: exp_mult_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)exp_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     exp_mult_cool=tmax*alpha**k
@@ -348,7 +346,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: log_mult_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)log_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     log_mult_cool=tmax/(1.0+alpha*LOG10(k+1.0))
@@ -361,7 +359,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: quad_mult_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)quad_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     quad_mult_cool=tmax/(1.0+alpha*k**2)
@@ -374,7 +372,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: lin_add_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)lin_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     lin_add_cool=tmin+(tmax-tmin)*(n*1.0-k)/(n*1.0)
@@ -387,7 +385,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: quad_add_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)quad_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     quad_add_cool=tmin+(tmax-tmin)*((n*1.0-k)/(n*1.0))**2
@@ -400,7 +398,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: exp_add_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)exp_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     exp_add_cool=tmin+(tmax-tmin)/(1.0+EXP(2.0*LOG(tmax-tmin)/(n*1.0))*(k-0.5*n))
@@ -413,7 +411,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: k,n
     REAL(8) :: trig_add_cool
 
-    !this line is literally just to insure that it doesn't complain about not using the variables
+    !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)trig_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
     trig_add_cool=tmin+0.5*(tmax-tmin)*(1.0+COS(k*pi/n))
