@@ -1,12 +1,13 @@
-# openSimAnn
+# OpenFSAU
+
 ##Description
 ---
-A Fortran based open source simulated annealing utility.
+OpenFSAU (Open source Fortran Simulated Annealing Utility). A Fortran based open source simulated annealing utility.
 
 This utility consists of a single module that can be generally assigned to solve a [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) optimization problem.
 A user can easily add this module to any existing modern Fortran program since the module is self contained and sufficiently abstracted.
 
-To use the simulated annealing module, point to it properly in your make file and add `USE sim_anneal` to the module/program that is using it.
+To use the simulated annealing module, point to it properly in your make file and add `USE OpenFSAU` to the module/program that is using it.
 The simulated annealing module has two public types `sa_comb_type` and `sa_cont_type`.
 `sa_comb_type` is a combinatorial type simulated annealing optimizer and `sa_cont_type` is a continuous function simulated annealing optimizer.
 To use, create a simulated annealing object with `TYPE(sa_comb_type) :: <sa_object>`.

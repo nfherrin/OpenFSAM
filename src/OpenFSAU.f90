@@ -1,5 +1,5 @@
 !simmulated annealing functions
-MODULE sim_anneal
+MODULE OpenFSAU
   IMPLICIT NONE
   PRIVATE
   PUBLIC sa_comb_type,sa_cont_type
@@ -416,4 +416,4 @@ CONTAINS
 
     trig_add_cool=tmin+0.5*(tmax-tmin)*(1.0+COS(k*pi/n))
   ENDFUNCTION trig_add_cool
-END MODULE sim_anneal
+END MODULE OpenFSAU

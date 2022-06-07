@@ -1,6 +1,6 @@
 !globals module
 MODULE globals
-  USE sim_anneal
+  USE OpenFSAU
   IMPLICIT NONE
 
   !customer locations

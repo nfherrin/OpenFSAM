@@ -3,7 +3,6 @@ PROGRAM fortNNASA
   USE globals
   USE infuncs
   USE outfuncs
-  USE sim_anneal
   USE travel_sales
   IMPLICIT NONE
 
