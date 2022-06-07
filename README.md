@@ -10,7 +10,7 @@ A user can easily add this module to any existing modern Fortran program since t
 To use the simulated annealing module, point to it properly in your make file and add `USE OpenFSAU` to the module/program that is using it.
 The simulated annealing module has two public types `sa_comb_type` and `sa_cont_type`.
 `sa_comb_type` is a combinatorial type simulated annealing optimizer and `sa_cont_type` is a continuous function simulated annealing optimizer.
-To use, create a simulated annealing object with `TYPE(sa_comb_type) :: <sa_object>`.
+To use, create a simulated annealing object with `TYPE(sa_comb_type) :: <sa_object>` or  `TYPE(sa_cont_type) :: <sa_object>`.
 This object now needs to be initialized.
 To initialize, the user must specify the following variables
   1. Maximum number of steps in the annealing `<sa_object>%max_step` (`INT` default: `100`)
