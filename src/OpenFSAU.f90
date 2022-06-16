@@ -170,6 +170,7 @@ CONTAINS
       !check and see if we accept the new temperature (lower temps always accepted)
       CALL random_number(temp_r)
       IF(temp_r .LE. accept_prob(e_curr,e_neigh,t_curr))THEN
+        !if we accept then it always counts as a new step
         step=step+1
         SELECTTYPE(thisSA)
           TYPEIS(sa_comb_type)
@@ -179,7 +180,10 @@ CONTAINS
         ENDSELECT
         e_curr=e_neigh
       ELSE
-        !otherwise reject the neighbor and do nothing
+        !otherwise, it has a 1% chance to count as a new step to finish the problem
+        !especially important for combinatorials
+        CALL random_number(temp_r)
+        IF(temp_r .LE. 0.01D0)step=step+1
       ENDIF
       !cool the temperature
       t_curr=thisSA%cool(thisSA%t_min,thisSA%t_max,thisSA%alpha,step,thisSA%max_step)
@@ -228,13 +232,15 @@ CONTAINS
     REAL(8) :: delta_e
 
     delta_e=e_neigh-e_current
-    IF(-delta_e/t_current .LE. -700)THEN
-      accept_prob=0.0
-    ELSEIF(-delta_e/t_current .GE. 700)THEN
-      accept_prob=10.0
+    IF(-delta_e/t_current .LE. -700.0D0)THEN
+      accept_prob=0.0D0
+    ELSEIF(-delta_e/t_current .GE. 700.0D0)THEN
+      accept_prob=10.0D0
     ELSE
       accept_prob=EXP(-delta_e/t_current)
     ENDIF
+    IF(delta_e .LE. 0.0D0)accept_prob=10.0D0
+    IF(ISNAN(accept_prob))accept_prob=0.0D0
   ENDFUNCTION accept_prob
 
   !get a new neighbor state for a combinatorial problem
