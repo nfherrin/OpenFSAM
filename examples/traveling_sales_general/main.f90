@@ -1,4 +1,4 @@
-!A Fortran based neural network accelerated simulated annealing software.
+!Simulated annealing solution to the traveling salesman problem.
 PROGRAM fortNNASA
   USE globals
   USE infuncs

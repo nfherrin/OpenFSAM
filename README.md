@@ -1,8 +1,10 @@
 # OpenFSAU
 
+---
 ##Description
 ---
-OpenFSAU (Open source Fortran Simulated Annealing Utility). A Fortran based open source simulated annealing utility.
+OpenFSAU (**O**pen source **F**ortran **S**imulated **A**nnealing **U**tility).
+A Fortran based open source simulated annealing utility.
 
 This utility consists of a single module that can be generally assigned to solve a [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) optimization problem.
 A user can easily add this module to any existing modern Fortran program since the module is self contained and sufficiently abstracted.

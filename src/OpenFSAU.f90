@@ -1,4 +1,4 @@
-!simmulated annealing functions
+!simulated annealing functions
 MODULE OpenFSAU
   IMPLICIT NONE
   PRIVATE
@@ -15,17 +15,20 @@ MODULE OpenFSAU
     !total number of steps it took
     INTEGER :: total_steps=0
     !alpha value for cooling
-    REAL(8) :: alpha=0.01
+    REAL(8) :: alpha=0.01D0
     !maximum temperature
-    REAL(8) :: t_max=100
+    REAL(8) :: t_max=100.0D0
     !minimum temperature
-    REAL(8) :: t_min=0
+    REAL(8) :: t_min=0.0D0
     !best energy
     REAL(8) :: e_best=1.0D+307
     !cooling option
     CHARACTER(64) :: cool_opt='LinMult'
     !whether cooling is monotonic or not
     LOGICAL :: mon_cool=.TRUE.
+    !the initial temperature to start resetting the current state to the best found state
+    !when this temperature is reached. This temperature is halved every-time it is reached.
+    REAL(8) :: resvar=0.0d0
     !Cooling schedule
     PROCEDURE(prototype_cooling),POINTER :: cool => NULL()
     CONTAINS
@@ -57,9 +60,12 @@ MODULE OpenFSAU
     !best energy state
     REAL(8), ALLOCATABLE, DIMENSION(:) :: state_best
     !damping factor
-    REAL(8) :: damping=1.0
+    REAL(8) :: damping=0.0D0
     !upper and lower bounds, will be set to bounds of initial state if not changed
-    REAL(8) :: smin=0.0,smax=0.0
+    REAL(8) :: smin=0.0D0,smax=0.0D0
+    !flag for dynamic damping, i.e. if true damping will reduce by a factor of 2 each time the
+    !resvar value is found
+    LOGICAL :: damp_dyn=.FALSE.
     !energy calculation
     PROCEDURE(prototype_eg_cont),POINTER :: energy => NULL()
     CONTAINS
@@ -104,7 +110,7 @@ CONTAINS
   SUBROUTINE optimize(thisSA)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8) :: e_neigh
-    INTEGER :: step
+    INTEGER :: step,step_count
     REAL(8) :: temp_r,start,finish,e_curr,t_curr
 
     CALL set_cooling(thisSA)
@@ -142,14 +148,16 @@ CONTAINS
           thisSA%smax=MAXVAL(thisSA%state_curr)
           thisSA%smin=MINVAL(thisSA%state_curr)
         ENDIF
+        IF(thisSA%damping .LE. 1.0D-15)thisSA%damping=ABS(thisSA%smax-thisSA%smin)/2.0D0
     ENDSELECT
 
     t_curr=thisSA%t_max
-    step=0
+    step=1
+    step_count=0
     CALL CPU_TIME(start)
     !actual simulated annealing happens here
     DO WHILE(step .LE. thisSA%max_step .AND. t_curr .GE. thisSA%t_min)
-      step=step+1
+      step_count=step_count+1
       !get a new neighbor and compute energy
       SELECTTYPE(thisSA)
         TYPEIS(sa_comb_type)
@@ -162,6 +170,7 @@ CONTAINS
       !check and see if we accept the new temperature (lower temps always accepted)
       CALL random_number(temp_r)
       IF(temp_r .LE. accept_prob(e_curr,e_neigh,t_curr))THEN
+        step=step+1
         SELECTTYPE(thisSA)
           TYPEIS(sa_comb_type)
             thisSA%state_curr=thisSA%state_neigh
@@ -185,10 +194,23 @@ CONTAINS
         ENDSELECT
       ENDIF
       IF(.NOT. thisSA%mon_cool)t_curr=t_curr*(1.0+(e_curr-thisSA%e_best)/e_curr)
+      !rewind to best value
+      IF(ABS(t_curr) .LE. thisSA%resvar)THEN
+        thisSA%resvar=thisSA%resvar/2.0D0
+        SELECTTYPE(thisSA)
+          TYPEIS(sa_comb_type)
+            e_curr=thisSA%e_best
+            thisSA%state_curr=thisSA%state_best
+          TYPEIS(sa_cont_type)
+            e_curr=thisSA%e_best
+            thisSA%state_curr=thisSA%state_best
+            IF(thisSA%damp_dyn)thisSA%damping=thisSA%damping/2.0D0
+        ENDSELECT
+      ENDIF
     ENDDO
     CALL CPU_TIME(finish)
 
-    thisSA%total_steps=step-1
+    thisSA%total_steps=step_count-1
 
     !set to the best state we ended up finding.
     SELECTTYPE(thisSA)
@@ -323,7 +345,7 @@ CONTAINS
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)lin_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
-    lin_mult_cool=tmax-alpha*k
+    lin_mult_cool=tmax/(1.0D0+alpha*k)
   ENDFUNCTION lin_mult_cool
 
   !natural log exponential multiplicative cooling
@@ -349,7 +371,7 @@ CONTAINS
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)log_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
-    log_mult_cool=tmax/(1.0+alpha*LOG10(k+1.0))
+    log_mult_cool=tmax/(1.0D0+alpha*LOG10(k+1.0D0))
   ENDFUNCTION log_mult_cool
 
   !quadratic multiplicative cooling
@@ -362,7 +384,7 @@ CONTAINS
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)quad_mult_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
-    quad_mult_cool=tmax/(1.0+alpha*k**2)
+    quad_mult_cool=tmax/(1.0+alpha*(k*1.0D0)**2)
   ENDFUNCTION quad_mult_cool
 
   !linear additive cooling
@@ -375,7 +397,7 @@ CONTAINS
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)lin_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
-    lin_add_cool=tmin+(tmax-tmin)*(n*1.0-k)/(n*1.0)
+    lin_add_cool=tmin+(tmax-tmin)*(n*1.0D0-k)/(n*1.0D0)
   ENDFUNCTION lin_add_cool
 
   !quadratic additive cooling
@@ -388,7 +410,7 @@ CONTAINS
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)quad_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
-    quad_add_cool=tmin+(tmax-tmin)*((n*1.0-k)/(n*1.0))**2
+    quad_add_cool=tmin+(tmax-tmin)*((n*1.0D0-k)/(n*1.0D0))**2
   ENDFUNCTION quad_add_cool
 
   !exponential additive cooling
@@ -401,7 +423,7 @@ CONTAINS
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)exp_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
-    exp_add_cool=tmin+(tmax-tmin)/(1.0+EXP(2.0*LOG(tmax-tmin)/(n*1.0))*(k-0.5*n))
+    exp_add_cool=tmin+(tmax-tmin)/(1.0D0+EXP(2.0D0*LOG(tmax-tmin)*(k-0.5D0*n)/(n*1.0D0)))
   ENDFUNCTION exp_add_cool
 
   !trigonometric additive cooling
@@ -414,6 +436,6 @@ CONTAINS
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)trig_add_cool=tmin+tmax+alpha+k+n+thisSA%e_best
 
-    trig_add_cool=tmin+0.5*(tmax-tmin)*(1.0+COS(k*pi/n))
+    trig_add_cool=tmin+0.5D0*(tmax-tmin)*(1.0D0+COS(k*pi/(n*1.0D0)))
   ENDFUNCTION trig_add_cool
 END MODULE OpenFSAU

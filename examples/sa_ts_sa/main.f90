@@ -1,4 +1,4 @@
-!A Fortran based neural network accelerated simulated annealing software.
+!A simulated annealing for simulated annealing parameters.
 PROGRAM fortNNASA
   USE globals
   USE infuncs
