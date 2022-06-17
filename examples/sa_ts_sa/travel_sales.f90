@@ -77,11 +77,10 @@ CONTAINS
     REAL(8),INTENT(IN) :: invars(3)
     INTEGER :: i
 
-    ts_simanneal%max_step=1000000
-    ts_simanneal%alpha=invars(1)
+    ts_simanneal%max_step=NINT(invars(1))
     ts_simanneal%t_max=invars(2)
     ts_simanneal%t_min=invars(3)
-    ts_simanneal%cool_opt='QuadMult'
+    ts_simanneal%cool_opt='QuadAdd'
     ts_simanneal%mon_cool=.FALSE.
     ALLOCATE(ts_simanneal%state_curr(num_customers))
     DO i=1,num_customers

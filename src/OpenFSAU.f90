@@ -23,9 +23,11 @@ MODULE OpenFSAU
     !best energy
     REAL(8) :: e_best=1.0D+307
     !cooling option
-    CHARACTER(64) :: cool_opt='LinMult'
+    CHARACTER(64) :: cool_opt='LinAdd'
     !whether cooling is monotonic or not
     LOGICAL :: mon_cool=.TRUE.
+    !progress bar
+    LOGICAL :: prog_bar=.FALSE.
     !the initial temperature to start resetting the current state to the best found state
     !when this temperature is reached. This temperature is halved every-time it is reached.
     REAL(8) :: resvar=0.0d0
@@ -110,7 +112,7 @@ CONTAINS
   SUBROUTINE optimize(thisSA)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8) :: e_neigh
-    INTEGER :: step,step_count
+    INTEGER :: step
     REAL(8) :: temp_r,start,finish,e_curr,t_curr
 
     CALL set_cooling(thisSA)
@@ -152,12 +154,13 @@ CONTAINS
     ENDSELECT
 
     t_curr=thisSA%t_max
-    step=1
-    step_count=0
+    step=0
+    thisSA%total_steps=-1
+    IF(thisSA%prog_bar)WRITE(*,'(A)',ADVANCE='NO')'PROGRESS:'
     CALL CPU_TIME(start)
     !actual simulated annealing happens here
     DO WHILE(step .LE. thisSA%max_step .AND. t_curr .GE. thisSA%t_min)
-      step_count=step_count+1
+      thisSA%total_steps=thisSA%total_steps+1
       !get a new neighbor and compute energy
       SELECTTYPE(thisSA)
         TYPEIS(sa_comb_type)
@@ -172,6 +175,8 @@ CONTAINS
       IF(temp_r .LE. accept_prob(e_curr,e_neigh,t_curr))THEN
         !if we accept then it always counts as a new step
         step=step+1
+        IF(thisSA%prog_bar .AND. MOD(step,NINT(thisSA%max_step/91.D0)) .EQ. 0) &
+          WRITE(*,'(A)',ADVANCE='NO')'*'
         SELECTTYPE(thisSA)
           TYPEIS(sa_comb_type)
             thisSA%state_curr=thisSA%state_neigh
@@ -183,7 +188,11 @@ CONTAINS
         !otherwise, it has a 1% chance to count as a new step to finish the problem
         !especially important for combinatorials
         CALL random_number(temp_r)
-        IF(temp_r .LE. 0.01D0)step=step+1
+        IF(temp_r .LE. 0.01D0)THEN
+          step=step+1
+          IF(thisSA%prog_bar .AND. MOD(step,NINT(thisSA%max_step/91.D0)) .EQ. 0) &
+            WRITE(*,'(A)',ADVANCE='NO')'*'
+        ENDIF
       ENDIF
       !cool the temperature
       t_curr=thisSA%cool(thisSA%t_min,thisSA%t_max,thisSA%alpha,step,thisSA%max_step)
@@ -213,8 +222,7 @@ CONTAINS
       ENDIF
     ENDDO
     CALL CPU_TIME(finish)
-
-    thisSA%total_steps=step_count-1
+    IF(thisSA%prog_bar)WRITE(*,'(A)')'*'
 
     !set to the best state we ended up finding.
     SELECTTYPE(thisSA)
@@ -305,10 +313,12 @@ CONTAINS
     DO i=1,SIZE(s_curr)
       CALL random_number(temp_r)
       !perturb the state
-      get_neigh_cont(i)=s_curr(i)+(temp_r-0.5)*damp_app
+      get_neigh_cont(i)=s_curr(i)+(temp_r-0.5D0)*damp_app
       !make sure it doesn't go out of bounds
+
       get_neigh_cont(i)=MAX(MIN(get_neigh_cont(i),max_ch),min_ch)
     ENDDO
+
   ENDFUNCTION get_neigh_cont
 
   !set the cooling schedule
@@ -334,7 +344,7 @@ CONTAINS
         thisSA%cool => trig_add_cool
       CASE('custom')
         !do nothing, it is assumed the user already assgined a custom cooling schedule
-        WRITE(*,*)'Using user specified cooling function'
+        WRITE(*,'(A)')'Using user specified cooling function'
       CASE DEFAULT
         WRITE(*,'(2A)')TRIM(ADJUSTL(thisSA%cool_opt)),' is not a valid cooling option'
         STOP 'The user MUST select a valid cooling option or give a custom cooling function'

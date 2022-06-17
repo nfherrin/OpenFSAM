@@ -1,5 +1,5 @@
 !Solution for 6 different non-monotonic functions and their combination using SA.
-PROGRAM fortNNASA
+PROGRAM continuous_test
   USE OpenFSAU
   IMPLICIT NONE
   REAL(8) :: minvals(6),minlocs(6),max_step,alpha,t_max,t_min,smin,smax,damping,resvar,errcomb
@@ -41,83 +41,84 @@ PROGRAM fortNNASA
   WRITE(*,'(A)')'-----------------------------------function 1-----------------------------------'
   CALL setup_sa_func1()
   CALL func_sa%optimize()
-  WRITE(*,'(A)')'              min_erg         min_loc'
-  WRITE(*,'(A,40ES16.8)')'ref: ',minvals(1),minlocs(1)
-  WRITE(*,'(A,40ES16.8)')'SA:  ',func_sa%e_best,func_sa%state_best
-  WRITE(*,'(A)')'     min_erg_err     min_loc_err  num_steps'
-  WRITE(*,'(2ES16.8,I11)')ABS(func_sa%e_best-minvals(1))/ABS(minvals(1)) &
+  WRITE(*,'(A)')'          min_erg     min_loc'
+  WRITE(*,'(A,40ES12.4)')'ref: ',minvals(1),minlocs(1)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-minvals(1))/ABS(minvals(1)) &
     ,ABS(func_sa%state_best(1)-minlocs(1))/ABS(minlocs(1)),func_sa%total_steps
-  WRITE(*,*)
+  WRITE(*,'(A)')
   DEALLOCATE(func_sa%state_curr)
 
   !function 2 solution
   WRITE(*,'(A)')'-----------------------------------function 2-----------------------------------'
   CALL setup_sa_func2()
   CALL func_sa%optimize()
-  WRITE(*,'(A)')'              min_erg         min_loc'
-  WRITE(*,'(A,40ES16.8)')'ref: ',minvals(2),minlocs(2)
-  WRITE(*,'(A,40ES16.8)')'SA:  ',func_sa%e_best,func_sa%state_best
-  WRITE(*,'(A)')'     min_erg_err     min_loc_err  num_steps'
-  WRITE(*,'(2ES16.8,I11)')ABS(func_sa%e_best-minvals(2))/ABS(minvals(2)) &
+  WRITE(*,'(A)')'          min_erg     min_loc'
+  WRITE(*,'(A,40ES12.4)')'ref: ',minvals(2),minlocs(2)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-minvals(2))/ABS(minvals(2)) &
     ,ABS(func_sa%state_best(1)-minlocs(2))/ABS(minlocs(2)),func_sa%total_steps
-  WRITE(*,*)
+  WRITE(*,'(A)')
   DEALLOCATE(func_sa%state_curr)
 
   !function 3 solution
   WRITE(*,'(A)')'-----------------------------------function 3-----------------------------------'
   CALL setup_sa_func3()
   CALL func_sa%optimize()
-  WRITE(*,'(A)')'              min_erg         min_loc'
-  WRITE(*,'(A,40ES16.8)')'ref: ',minvals(3),minlocs(3)
-  WRITE(*,'(A,40ES16.8)')'SA:  ',func_sa%e_best,func_sa%state_best
-  WRITE(*,'(A)')'     min_erg_err     min_loc_err  num_steps'
-  WRITE(*,'(2ES16.8,I11)')ABS(func_sa%e_best-minvals(3))/ABS(minvals(3)) &
+  WRITE(*,'(A)')'          min_erg     min_loc'
+  WRITE(*,'(A,40ES12.4)')'ref: ',minvals(3),minlocs(3)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-minvals(3))/ABS(minvals(3)) &
     ,ABS(func_sa%state_best(1)-minlocs(3))/ABS(minlocs(3)),func_sa%total_steps
-  WRITE(*,*)
+  WRITE(*,'(A)')
   DEALLOCATE(func_sa%state_curr)
 
   !function 4 solution
   WRITE(*,'(A)')'-----------------------------------function 4-----------------------------------'
   CALL setup_sa_func4()
   CALL func_sa%optimize()
-  WRITE(*,'(A)')'              min_erg         min_loc'
-  WRITE(*,'(A,40ES16.8)')'ref: ',minvals(4),minlocs(4)
-  WRITE(*,'(A,40ES16.8)')'SA:  ',func_sa%e_best,func_sa%state_best
-  WRITE(*,'(A)')'     min_erg_err     min_loc_err  num_steps'
-  WRITE(*,'(2ES16.8,I11)')ABS(func_sa%e_best-minvals(4))/ABS(minvals(4)) &
+  WRITE(*,'(A)')'          min_erg     min_loc'
+  WRITE(*,'(A,40ES12.4)')'ref: ',minvals(4),minlocs(4)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-minvals(4))/ABS(minvals(4)) &
     ,ABS(func_sa%state_best(1)-minlocs(4))/ABS(minlocs(4)),func_sa%total_steps
-  WRITE(*,*)
+  WRITE(*,'(A)')
   DEALLOCATE(func_sa%state_curr)
 
   !function 5 solution
   WRITE(*,'(A)')'-----------------------------------function 5-----------------------------------'
   CALL setup_sa_func5()
   CALL func_sa%optimize()
-  WRITE(*,'(A)')'              min_erg         min_loc'
-  WRITE(*,'(A,40ES16.8)')'ref: ',minvals(5),minlocs(5)
-  WRITE(*,'(A,40ES16.8)')'SA:  ',func_sa%e_best,func_sa%state_best
-  WRITE(*,'(A)')'     min_erg_err     min_loc_err  num_steps'
-  WRITE(*,'(2ES16.8,I11)')ABS(func_sa%e_best-minvals(5))/ABS(minvals(5)) &
+  WRITE(*,'(A)')'          min_erg     min_loc'
+  WRITE(*,'(A,40ES12.4)')'ref: ',minvals(5),minlocs(5)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-minvals(5))/ABS(minvals(5)) &
     ,ABS(func_sa%state_best(1)-minlocs(5))/ABS(minlocs(5)),func_sa%total_steps
-  WRITE(*,*)
+  WRITE(*,'(A)')
   DEALLOCATE(func_sa%state_curr)
 
   !function 6 solution
   WRITE(*,'(A)')'-----------------------------------function 6-----------------------------------'
   CALL setup_sa_func6()
   CALL func_sa%optimize()
-  WRITE(*,'(A)')'              min_erg         min_loc'
-  WRITE(*,'(A,40ES16.8)')'ref: ',minvals(6),minlocs(6)
-  WRITE(*,'(A,40ES16.8)')'SA:  ',func_sa%e_best,func_sa%state_best
-  WRITE(*,'(A)')'     min_erg_err     min_loc_err  num_steps'
-  WRITE(*,'(2ES16.8,I11)')ABS(func_sa%e_best-minvals(6))/ABS(minvals(6)) &
+  WRITE(*,'(A)')'          min_erg     min_loc'
+  WRITE(*,'(A,40ES12.4)')'ref: ',minvals(6),minlocs(6)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-minvals(6))/ABS(minvals(6)) &
     ,ABS(func_sa%state_best(1)-minlocs(6))/ABS(minlocs(6)),func_sa%total_steps
-  WRITE(*,*)
+  WRITE(*,'(A)')
   DEALLOCATE(func_sa%state_curr)
 
   !combined functions solution
   WRITE(*,'(A)')'---------------------------------combined funcs---------------------------------'
-  max_step=max_step*6
+  WRITE(*,'(A)')'Annealing: '
+  max_step=max_step*600
   CALL setup_sa_func_comb()
   CALL func_sa%optimize()
   errcomb=0.0D0
@@ -125,12 +126,11 @@ PROGRAM fortNNASA
     errcomb=errcomb+((func_sa%state_best(ios)-minlocs(ios))/minlocs(ios))**2
   ENDDO
   errcomb=SQRT(errcomb)
-  WRITE(*,'(A)')'              min_erg       min_loc_1       min_loc_2       min_loc_3       &
-    &min_loc_4       min_loc_5       min_loc_6'
-  WRITE(*,'(A,40ES16.8)')'ref: ',SUM(minvals(:)),minlocs(:)
-  WRITE(*,'(A,40ES16.8)')'SA:  ',func_sa%e_best,func_sa%state_best
-  WRITE(*,'(A)')'     min_erg_err     min_loc_err  num_steps'
-  WRITE(*,'(2ES16.8,I11)')ABS(func_sa%e_best-SUM(minvals(:)))/SUM(ABS(minvals(:))) &
+  WRITE(*,'(A)')'          min_erg   min_loc_1   min_loc_2   min_loc_3   min_loc_4   min_loc_5   min_loc_6'
+  WRITE(*,'(A,40ES12.4)')'ref: ',SUM(minvals(:)),minlocs(:)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-SUM(minvals(:)))/SUM(ABS(minvals(:))) &
     ,errcomb,func_sa%total_steps
   DEALLOCATE(func_sa%state_curr)
 
@@ -138,6 +138,7 @@ CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func1()
+    REAL(8) :: temp_r
     func_sa%max_step=max_step
     func_sa%alpha=alpha
     func_sa%t_max=t_max
@@ -153,11 +154,13 @@ CONTAINS
     func_sa%energy => func1_eg
     !give random initial guess
     ALLOCATE(func_sa%state_curr(1))
-    func_sa%state_curr=RAND()*20.0d0-10.0d0
+    CALL random_number(temp_r)
+    func_sa%state_curr=temp_r*20.0d0-10.0d0
   ENDSUBROUTINE setup_sa_func1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func2()
+    REAL(8) :: temp_r
     func_sa%max_step=max_step
     func_sa%alpha=alpha
     func_sa%t_max=t_max
@@ -173,11 +176,13 @@ CONTAINS
     func_sa%energy => func2_eg
     !give random initial guess
     ALLOCATE(func_sa%state_curr(1))
-    func_sa%state_curr=RAND()*20.0d0-10.0d0
+    CALL random_number(temp_r)
+    func_sa%state_curr=temp_r*20.0d0-10.0d0
   ENDSUBROUTINE setup_sa_func2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func3()
+    REAL(8) :: temp_r
     func_sa%max_step=max_step
     func_sa%alpha=alpha
     func_sa%t_max=t_max
@@ -193,11 +198,13 @@ CONTAINS
     func_sa%energy => func3_eg
     !give random initial guess
     ALLOCATE(func_sa%state_curr(1))
-    func_sa%state_curr=RAND()*20.0d0-10.0d0
+    CALL random_number(temp_r)
+    func_sa%state_curr=temp_r*20.0d0-10.0d0
   ENDSUBROUTINE setup_sa_func3
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func4()
+    REAL(8) :: temp_r
     func_sa%max_step=max_step
     func_sa%alpha=alpha
     func_sa%t_max=t_max
@@ -213,11 +220,13 @@ CONTAINS
     func_sa%energy => func4_eg
     !give random initial guess
     ALLOCATE(func_sa%state_curr(1))
-    func_sa%state_curr=RAND()*20.0d0-10.0d0
+    CALL random_number(temp_r)
+    func_sa%state_curr=temp_r*20.0d0-10.0d0
   ENDSUBROUTINE setup_sa_func4
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func5()
+    REAL(8) :: temp_r
     func_sa%max_step=max_step
     func_sa%alpha=alpha
     func_sa%t_max=t_max
@@ -233,11 +242,13 @@ CONTAINS
     func_sa%energy => func5_eg
     !give random initial guess
     ALLOCATE(func_sa%state_curr(1))
-    func_sa%state_curr=RAND()*20.0d0-10.0d0
+    CALL random_number(temp_r)
+    func_sa%state_curr=temp_r*20.0d0-10.0d0
   ENDSUBROUTINE setup_sa_func5
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func6()
+    REAL(8) :: temp_r
     func_sa%max_step=max_step
     func_sa%alpha=alpha
     func_sa%t_max=t_max
@@ -253,18 +264,21 @@ CONTAINS
     func_sa%energy => func6_eg
     !give random initial guess
     ALLOCATE(func_sa%state_curr(1))
-    func_sa%state_curr=RAND()*20.0d0-10.0d0
+    CALL random_number(temp_r)
+    func_sa%state_curr=temp_r*20.0d0-10.0d0
   ENDSUBROUTINE setup_sa_func6
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func_comb()
-    REAL(8) :: minstart,inguess,locfind(1)
+    REAL(8) :: minstart,inguess,locfind(1),temp_r
+    INTEGER :: i
     func_sa%max_step=max_step
     func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
     func_sa%mon_cool=mon_cool
+    func_sa%prog_bar=.TRUE.
     func_sa%smin=smin
     func_sa%smax=smax
     func_sa%damping=damping
@@ -274,7 +288,10 @@ CONTAINS
     func_sa%energy => comb_eg
     !give random initial guess
     ALLOCATE(func_sa%state_curr(6))
-    func_sa%state_curr=RAND()*20.0d0-10.0d0
+    DO i=1,6
+      CALL random_number(temp_r)
+      func_sa%state_curr(i)=temp_r*20.0d0-10.0d0
+    ENDDO
   ENDSUBROUTINE setup_sa_func_comb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -392,4 +409,4 @@ CONTAINS
     comb_eg=comb_eg+func5(state_ord(5))
     comb_eg=comb_eg+func6(state_ord(6))
   ENDFUNCTION comb_eg
-END PROGRAM fortNNASA
+END PROGRAM continuous_test

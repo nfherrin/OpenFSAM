@@ -136,12 +136,12 @@ CONTAINS
   SUBROUTINE setup_ts_sa()
     INTEGER :: i
 
-    ts_simanneal%max_step=1000*num_customers
-    ts_simanneal%alpha=0.85
+    ts_simanneal%max_step=10000*num_customers
     ts_simanneal%t_max=100
     ts_simanneal%t_min=0
     ts_simanneal%cool_opt='QuadAdd'
     ts_simanneal%mon_cool=.FALSE.
+    ts_simanneal%prog_bar=.TRUE.
     ALLOCATE(ts_simanneal%state_curr(num_customers))
     DO i=1,num_customers
       ts_simanneal%state_curr(i)=i
