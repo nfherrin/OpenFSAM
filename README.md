@@ -19,24 +19,29 @@ To initialize, the user must specify the following variables
   2. Alpha parameter for cooling rate `<sa_object>%alpha` (`REAL(8)` default: `0.01`)
   3. Maximum (starting) temperature `<sa_object>%t_max` (`REAL(8)` default: `100`)
   4. Minimum (final) temperature `<sa_object>%t_min` (`REAL(8)` default: `0`)
-  5. Cooling schedule option `<sa_object>%cool_opt` (`CHARACTER` default:`LinMult`)
-  6. Cooling monotonic option `<sa_object>%mon_cool` (`LOGICAL` default:`.TRUE.`)
-  7. The initial guess state variable `<sa_object>%state_curr` must be initialized and set.
+  5. Cooling schedule option `<sa_object>%cool_opt` (`CHARACTER` default: `LinMult`)
+  6. Cooling monotonic option `<sa_object>%mon_cool` (`LOGICAL` default: `.TRUE.`)
+  7. Progress bar `<sa_object>%prog_bar` (`LOGICAL` default: `.FALSE.`)
+  8. Restart Value `<sa_object>%resvar` (`REAL(8)` default: `0`)
+  9. The initial guess state variable `<sa_object>%state_curr` must be initialized and set.
     For `sa_comb_type`, this is a one dimensional integer array pointer.
     For `sa_cont_type`, this is a one dimensional double (`REAL(8)`) array pointer.
     This array has no default and MUST be both allocated and set by the user for the annealing to work.
     As a pointer, allocation can either occur through traditional allocation, or through pointing it to an already existing state variable array in the user's code.
-  8. The energy function `<sa_object>%energy` must be assigned.
+  10. The energy function `<sa_object>%energy` must be assigned.
     This is a pointer function that points to a user defined energy function which takes in the state array and outputs an energy.
     This function has no default and MUST be assigned by the user for the annealing to work.
-  9. \[For continuous annealing problems ONLY\] The damping factor `<sa_object>%damping` may be set (`REAL(8)` default: `1.0`).
-  10. \[For continuous annealing problems ONLY\] The minimum state variable value, `<sa_object>%smin`, and the maximum state variable value, `<sa_object>%smax`, may be set (`REAL(8)` default: `0.0`).
+  11. \[For continuous annealing problems ONLY\] The damping factor `<sa_object>%damping` may be set (`REAL(8)` default: `1.0`).
+  12. \[For continuous annealing problems ONLY\] The minimum state variable value, `<sa_object>%smin`, and the maximum state variable value, `<sa_object>%smax`, may be set (`REAL(8)` default: `0.0`).
     If they are not set or if the maximum is set below the minimum, the minimum and maximum values are taken from the minimum and maximum values of the initial state variables.
+  13. \[For continuous annealing problems ONLY\] Dynamic damping option `<sa_object>%damp_dyn` (`LOGICAL` default: `.FALSE.`).
 
 A brief explanation of the user initialized variables:
   1. The maximum number of steps, `n`, is the most steps the annealing counter will reach before stopping.
     If the cooling schedule is monotonic and additive, then this amount of steps will always be fully used before program completion.
     If the cooling schedule is non-monotonic and/or multiplicative, then the annealing may use less that `n` steps before the minimum temperature is reached.
+    For this implementation of simulated annealing, the number of steps always increase if a neighbor state is accepted, otherwise if the neighbor state is rejected, the step count has a 1% chance of increasing.
+    This feature allows for an even longer tail on simulated annealing cooling which been shown to be effective at increasing optimization.
   2. The alpha parameter is a user defined parameter for a multiplicative cooling schedule and the way in which it affects cooling depends on the schedule used.
   3. The maximum temperature is the initial temperature.
     For non-monotonic cooling the temperature may briefly go above this temperature.
@@ -57,18 +62,29 @@ A brief explanation of the user initialized variables:
       8. `TrigAdd` - Trigonometric additive cooling
   6. If the cooling is monotonic then the selected schedule alone is used.
     Otherwise the cooling result is multiplied by mu at each step, as described in the cooling reference.
-  7. The initial guess state variable is the set and values of parameters that the annealing routine perturbs and then computes the energy of in order to optimize.
+  7. If the user specifies a progress bar, then as the annealing progresses the progress bar will be shown as it cools.
+    Works best in additive cooling.
+  8. If the user specifies a positive restart value, then upon reaching that temperature, the problem will set the current state as the best state found thus far.
+    Additionally, the restart value will be halved so this will happen again later on.
+    If used, it should be made small so that the annealing has had the opportunity to traverse much of the domain.
+    This can be particularly useful in continuous annealing problems with multiple local minimums.
+  9. The initial guess state variable is the set and values of parameters that the annealing routine perturbs and then computes the energy of in order to optimize.
     In the example of the traveling salesman, it is the array of order of customer visitation by the salesman.
     Perturbation for combinatorial problems involves swapping two values.
     Perturbation for continuous problems involves perturbing each value by a random number from negative one half to positive one half times the damping factor.
-  8. The energy function is a calculation of a given state variable's energy.
+  10. The energy function is a calculation of a given state variable's energy.
     Simulated annealing searches for the minimum energy, so the user should make certain that their energy function is minimum at the desired optimal result.
     In the example of the traveling salesman, the energy is the total path length the salesman must travel for the given order.
-  9. \[For continuous annealing problems ONLY\] The damping factor is a factor determining how much state variables may be perturbed by for each neighbor perturbation.
+  11. \[For continuous annealing problems ONLY\] The damping factor is a factor determining how much state variables may be perturbed by for each neighbor perturbation.
     Typically this should be small relative to the magnitude of the state variables, but not so small that perturbations create essentially identical states.
     Half the damping factor is the maximum perturbation, positive or negative, that each state variable might be subjected to when finding a new neighbor.
-  10. \[For continuous annealing problems ONLY\] The minimum and maximum state variables prevent the continuous state variables from being perturbed outside specified bounds of the problem.
+    The default damping factor is half of the width of the problem bounds, i.e. `(<sa_object>%smax-<sa_object>%smin)/2`.
+  12. \[For continuous annealing problems ONLY\] The minimum and maximum state variables prevent the continuous state variables from being perturbed outside specified bounds of the problem.
     The user should ensure that only problem breaking values are excluded, otherwise the annealing may not be able to find the optimum state.
+  13. \[For continuous annealing problems ONLY\] Dynamic damping makes it so that each time the restart value is reached, the damping factor is halved.
+    As such, dynamic damping ONLY comes into play if a non-zero restart value is given.
+    This can be particularly useful for continuous problems where the user may wish to start with a large (often the default) damping factor, to traverse the whole domain.
+    Coupled with dynamic damping and a low (but nonzero) restart value, this allows the user to gradually decrease the effective portion of the domain that is being searched towards the end of the annealing.
 
 The user may now use the simulated annealing optimization in their code by calling `<sa_object>%optimize`.
 This subroutine results in the optimal state array found stored in `<sa_object>%state_best` and the energy of that state is stored in `<sa_object>%e_best`.
