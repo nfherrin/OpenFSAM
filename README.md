@@ -89,22 +89,26 @@ A brief explanation of the user initialized variables:
 The user may now use the simulated annealing optimization in their code by calling `<sa_object>%optimize`.
 This subroutine results in the optimal state array found stored in `<sa_object>%state_best` and the energy of that state is stored in `<sa_object>%e_best`.
 
-An example of usage of this utility is given in `examples/traveling_sales_general/` in which simulated annealing is used to optimize a traveling salesman problem.
+---
+## Simulated Annealing for the Traveling Salesman Problem
+---
+
+An example of usage of this utility for a combinatorial problem is given in `examples/traveling_sales_general/` in which simulated annealing is used to optimize a traveling salesman problem.
 The simulated annealing object is defined in `globals.f90` as
 ```
-TYPE(sa_comb_type) :: ts_simanneal
+  TYPE(sa_comb_type) :: ts_simanneal
 ```
 And is initialized in `travel_sales.f90` with the following code:
 ```
   SUBROUTINE setup_ts_sa()
     INTEGER :: i
 
-    ts_simanneal%max_step=1000000
-    ts_simanneal%alpha=0.85
+    ts_simanneal%max_step=10000*num_customers
     ts_simanneal%t_max=100
     ts_simanneal%t_min=0
-    ts_simanneal%cool_opt='QuadMult'
+    ts_simanneal%cool_opt='QuadAdd'
     ts_simanneal%mon_cool=.FALSE.
+    ts_simanneal%prog_bar=.TRUE.
     ALLOCATE(ts_simanneal%state_curr(num_customers))
     DO i=1,num_customers
       ts_simanneal%state_curr(i)=i
@@ -138,6 +142,69 @@ With the traveling salesman problem setup and simulated annealing initialization
 ```
 
 Which can then view the optimal state array in the form of `ts_simanneal%state_best` with an energy (path length) of `ts_simanneal%e_best`.
+
+---
+## Simulated Annealing for Continuous Function Optimization
+---
+
+An example of usage of this utility for continuous problems is given in `examples/continuous_test/` in which simulated annealing is used to optimize six functions and a sum of all six functions.
+The simulated annealing object is defined in `main.f90` as
+```
+  TYPE(sa_cont_type) :: func_sa
+```
+And is initialized in `main.f90` with the following code (shown here just for the first function):
+```
+  SUBROUTINE setup_sa_func1()
+    REAL(8) :: temp_r
+    func_sa%max_step=1000
+    func_sa%t_max=100.0D0
+    func_sa%t_min=1.0D-12
+    func_sa%cool_opt='QuadAdd'
+    func_sa%mon_cool=.FALSE.
+    func_sa%smin=-10.0D0
+    func_sa%smax=10.0D0
+    func_sa%damping=0.D0
+    func_sa%resvar=1.0D0
+    func_sa%damp_dyn=.TRUE.
+    !give energy function
+    func_sa%energy => func1_eg
+    !give random initial guess
+    ALLOCATE(func_sa%state_curr(1))
+    CALL random_number(temp_r)
+    func_sa%state_curr=temp_r*20.0d0-10.0d0
+  ENDSUBROUTINE setup_sa_func1
+```
+where the energy function is defined as
+```
+  FUNCTION func1_eg(thisSA,state_ord)
+    CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
+    REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
+    REAL(8) :: func1_eg
+
+    func1_eg=func1(state_ord(1))
+  ENDFUNCTION func1_eg
+```
+for function:
+```
+  FUNCTION func1(x)
+    REAL(8),INTENT(IN) :: x
+    REAL(8) :: func1
+    func1=10.0D0*SIN(x)-0.05D0*(x+2.0D0)+(x-1.0D0)**2+20.D0
+  ENDFUNCTION func1
+```
+
+With the function minimization problem setup and simulated annealing initialization complete, the optimization is then called in `main.f90` as
+```
+  CALL func_sa%optimize()
+```
+
+Which can then view the optimal state array in the form of `func_sa%state_best` with an energy (function value) of `func_sa%e_best`.
+
+This is done for all six functions and a sum of all six functions.
+It can be observed that the sum of all functions takes many more iterations to get a good solution and still the solution is not as good as the individual optimizations.
+This is because continuous simulated annealing perturbs every parameter, so a decrease may occur in which one parameter moved in a way that increased the energy, while not increasing it as much as the other perturbations decreased it.
+This demonstrates that for continuous simulated annealing, it is preferable to keep the number of parameters as low as possible.
+In this case, since the energy is a sum of each function, then the energy does not rely on any cross parameter terms, so that each portion of the energy may be optimized independently.
 
 ---
 ## Simulated Annealing for Simulated Annealing

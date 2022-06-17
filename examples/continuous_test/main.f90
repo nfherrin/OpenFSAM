@@ -2,7 +2,7 @@
 PROGRAM continuous_test
   USE OpenFSAU
   IMPLICIT NONE
-  REAL(8) :: minvals(6),minlocs(6),max_step,alpha,t_max,t_min,smin,smax,damping,resvar,errcomb
+  REAL(8) :: minvals(6),minlocs(6),max_step,t_max,t_min,smin,smax,damping,resvar,errcomb
   CHARACTER(64) :: cool_opt
   LOGICAL :: mon_cool,damp_dyn
   INTEGER :: ios
@@ -26,7 +26,6 @@ PROGRAM continuous_test
 
   !SA parameters
   max_step=1000
-  alpha=0.85D0
   t_max=100.0D0
   t_min=1.0D-12
   cool_opt='QuadAdd'
@@ -140,7 +139,6 @@ CONTAINS
   SUBROUTINE setup_sa_func1()
     REAL(8) :: temp_r
     func_sa%max_step=max_step
-    func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
@@ -162,7 +160,6 @@ CONTAINS
   SUBROUTINE setup_sa_func2()
     REAL(8) :: temp_r
     func_sa%max_step=max_step
-    func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
@@ -184,7 +181,6 @@ CONTAINS
   SUBROUTINE setup_sa_func3()
     REAL(8) :: temp_r
     func_sa%max_step=max_step
-    func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
@@ -206,7 +202,6 @@ CONTAINS
   SUBROUTINE setup_sa_func4()
     REAL(8) :: temp_r
     func_sa%max_step=max_step
-    func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
@@ -228,7 +223,6 @@ CONTAINS
   SUBROUTINE setup_sa_func5()
     REAL(8) :: temp_r
     func_sa%max_step=max_step
-    func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
@@ -250,7 +244,6 @@ CONTAINS
   SUBROUTINE setup_sa_func6()
     REAL(8) :: temp_r
     func_sa%max_step=max_step
-    func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
@@ -273,7 +266,6 @@ CONTAINS
     REAL(8) :: minstart,inguess,locfind(1),temp_r
     INTEGER :: i
     func_sa%max_step=max_step
-    func_sa%alpha=alpha
     func_sa%t_max=t_max
     func_sa%t_min=t_min
     func_sa%cool_opt=cool_opt
