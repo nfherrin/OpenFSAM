@@ -9,7 +9,6 @@ CONTAINS
 
   !sets up the traveling salesman annealing problem
   SUBROUTINE setup_sa_ts_sa()
-    REAL(8) :: temp_r
     sa_ts_simanneal%max_step=1000
     sa_ts_simanneal%t_max=100.0D0
     sa_ts_simanneal%t_min=1.0D-14
@@ -24,14 +23,11 @@ CONTAINS
     sa_ts_simanneal%damp_dyn=.TRUE.
     sa_ts_simanneal%num_perturb=1
     ALLOCATE(sa_ts_simanneal%state_curr(3))
-    !all state variables start at a random value and use a functional transform to actually get
-    !their values. This is so they can all use the same damping and max/mins
-    !start with solid initial guesses
-    CALL random_number(temp_r)
+    !all state variables use a functional transform to actually get
+    !their values. This is so they can all use the same damping and max/min
+    !start with ok initial guesses
     sa_ts_simanneal%state_curr(1)=1.0
-    CALL random_number(temp_r)
     sa_ts_simanneal%state_curr(2)=1.0
-    CALL random_number(temp_r)
     sa_ts_simanneal%state_curr(3)=1.0D-3
 
     !the energy function
@@ -60,7 +56,7 @@ CONTAINS
       sa_best=ts_simanneal%e_best
       !the L2 norm of the relative error is our first variable for the energy calculation
       l2err=l2err+(ABS(sa_best-sort_best)/sort_best)**2
-      !the second variable is l2 norm of the number of iterations
+      !the second variable is L2 norm of the number of iterations
       l2its=l2its+(ts_simanneal%total_steps*1.0D0)**2
       DEALLOCATE(ts_simanneal)
     ENDDO

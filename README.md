@@ -216,13 +216,122 @@ Indeed, it can be observed in the example that reducing the number of perturbed 
 ---
 
 The traveling salesman problem is the problem for which simulated annealing was originally created (or at least, this was the application where it was first named as such).
-As such, optimization of the traveling salesman problem is one of the common problems to demonstrate the effectiveness of simulated annealing.
+As such, optimization of the traveling salesman problem is one of the common ways to demonstrate the effectiveness of simulated annealing.
 Energy is typically expressed as some monotonically increasing function of the total path length, oftentimes simply the path length itself.
 Since it is a combinatorial problem, damping factors and minimums/maximum state values are not a part of the annealing problem.
-If we fix the energy function (to just the path length), then for a multiplicative cooling schedule the effectiveness will be determined by the maximum temperature, the minimum temperature, and the alpha factor (assuming we set a sufficiently large number of steps that the minimum temperature is reached).
-Well this is then a continuous optimization problem, figuring out which temperature bounds and which alpha factors provide the optimal simulated annealing for a given traveling salesman problem size.
-Similarly an additive cooling schedule will depend on the number of steps and the temperature bounds (but not on alpha).
+If we fix the energy function (to just the path length), then for a given additive cooling schedule, the effectiveness will be determined by the maximum temperature, the minimum temperature, and the number of iterations.
+Well this is then a continuous optimization problem, figuring out which temperature bounds and how many steps provide the optimal simulated annealing for a given traveling salesman problem size.
+Similarly an multiplicative cooling schedule will depend on alpha and the temperature bounds (but not on the number of steps if they are set sufficiently large).
 
-One of the issues is that determining how good the result is can be difficult for large traveling salesman problems.
-However, it can be noticed that traveling salesman problems look identical to a simulated annealing algorithm regardless of dimensionality since the only factor in the energy is total path length.
-As such, simulated annealing can be used on a 1D traveling salesman problem to compare to the actual optimal solution energy found using a sort.
+One of the issues here is that determining how good the result of a simulated annealing calculation is can be difficult for large traveling salesman problems since a reference solution must be known.
+However, it can be noticed that the only factor in the energy for a traveling salesman problem is total path length.
+Since the path length is solely dependent upon the distance between each point regardless of the physical dimensions of the problem, then traveling salesman problems look identical when solved using simulated annealing, regardless of dimensionality.
+As such, simulated annealing can be used on a 1D (and only on a 1D) traveling salesman problems to compare to the actual reference optimal solution energy found using a simple and inexpensive sort for an arbitrarily large traveling salesman problem.
+
+The information in the two previous paragraphs allows the creation of a traveling salesman simulated annealing solver optimizer using simulated annealing.
+That is to say, for any sized traveling salesman problem, we can search for an optimal number of iterations and temperature bounds using continuous simulated annealing.
+This is done in `examples/sa_ts_sa/` where the continuous annealing problem is set up in `sa_ts_sa.f90` as:
+```
+  !sets up the traveling salesman annealing problem
+  SUBROUTINE setup_sa_ts_sa()
+    sa_ts_simanneal%max_step=1000
+    sa_ts_simanneal%t_max=100.0D0
+    sa_ts_simanneal%t_min=1.0D-14
+    sa_ts_simanneal%cool_opt='QuadAdd'
+    sa_ts_simanneal%mon_cool=.FALSE.
+    sa_ts_simanneal%prog_bar=.TRUE.
+    !max and min values of the state variables
+    sa_ts_simanneal%smax=2.0D0
+    sa_ts_simanneal%smin=0.0D0
+    sa_ts_simanneal%damping=0.0D0
+    sa_ts_simanneal%resvar=50.0D0
+    sa_ts_simanneal%damp_dyn=.TRUE.
+    sa_ts_simanneal%num_perturb=1
+    ALLOCATE(sa_ts_simanneal%state_curr(3))
+    !all state variables use a functional transform to actually get
+    !their values. This is so they can all use the same damping and max/min
+    !start with ok initial guesses
+    sa_ts_simanneal%state_curr(1)=1.0
+    sa_ts_simanneal%state_curr(2)=1.0
+    sa_ts_simanneal%state_curr(3)=1.0D-3
+
+    !the energy function
+    sa_ts_simanneal%energy => sa_ts_eg
+  ENDSUBROUTINE setup_sa_ts_sa
+```
+where the energy function now solves the traveling salesman problem using simulated annealing with the current state parameters for the number of iterations as well as the temperature bounds.
+This is again defined in `sa_ts_sa.f90` as:
+```
+  !this function runs a simulated annealing problem for the traveling salesman with state determined
+  !temperatures and alpha values
+  FUNCTION sa_ts_eg(thisSA,state_ord)
+    CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
+    REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
+    REAL(8) :: sa_ts_eg
+
+    INTEGER :: i
+    REAL(8) :: l2err,l2its
+
+    l2err=0.0
+    l2its=0.0
+    !you want to do it many times so that your energy isn't too dependent on randomness
+    DO i=1,100
+      CALL ts_init()
+      ALLOCATE(ts_simanneal)
+      !setup the simulated annealing with the new parameters
+      CALL setup_ts_sa(state_transform(state_ord(:)))
+      CALL ts_simanneal%optimize()
+      sa_best=ts_simanneal%e_best
+      !the L2 norm of the relative error is our first variable for the energy calculation
+      l2err=l2err+(ABS(sa_best-sort_best)/sort_best)**2
+      !the second variable is L2 norm of the number of iterations
+      l2its=l2its+(ts_simanneal%total_steps*1.0D0)**2
+      DEALLOCATE(ts_simanneal)
+    ENDDO
+    l2err=SQRT(l2err/(i-1))
+    l2its=SQRT(l2its/(i-1))
+
+    !heavily weight any error, we want the optimal solution. Less heavy weight for the
+    ! number of iterations
+    sa_ts_eg=(l2err*1.0D+8+l2its*1.0D-4)*1.0D-1
+
+  ENDFUNCTION sa_ts_eg
+```
+The traveling salesman problem is setup each solve similar to the setup shown in the *Simulated Annealing for the Traveling Salesman Problem* example, this time in `travel_sales.f90`:
+```
+  SUBROUTINE setup_ts_sa(invars)
+    REAL(8),INTENT(IN) :: invars(3)
+    INTEGER :: i
+
+    ts_simanneal%max_step=NINT(invars(1))
+    ts_simanneal%t_max=invars(2)
+    ts_simanneal%t_min=invars(3)
+    ts_simanneal%cool_opt='QuadAdd'
+    ts_simanneal%mon_cool=.FALSE.
+    ALLOCATE(ts_simanneal%state_curr(num_customers))
+    DO i=1,num_customers
+      ts_simanneal%state_curr(i)=i
+    ENDDO
+    !point to a path length function that works with the SA type
+    ts_simanneal%energy => path_len_eg
+  ENDSUBROUTINE setup_ts_sa
+```
+The actual state variables are converted into the temperature bounds and iterations using a functional transformation allowing them all to be valid in the minimum and maximum range as well as all use the same damping factor, this is defined in `sa_ts_sa.f90`:
+```
+  !state variable transformation to our actual parameters
+  FUNCTION state_transform(state_vars)
+    REAL(8),INTENT(IN) :: state_vars(3)
+    REAL(8) :: state_transform(3)
+
+    !num iterations doesn't go above 10000 or below 100
+    state_transform(1)=4.95D+3*state_vars(1)+1.0D+2
+    !maximum temp doesn't go above 200 or below 11
+    state_transform(2)=94.5D0*state_vars(2)+11.D0
+    !minimum temp doesn't go above 10 or below 1.0E-12
+    state_transform(3)=10.0D0*state_vars(3)+1.0D-12
+  ENDFUNCTION state_transform
+```
+This example is fairly tailored towards annealing of a traveling salesman problem of size 10.
+For optimizing larger traveling salesman problems, the functional transform should likely be altered to allow for larger maximum iterations and potentially larger maximum temperatures.
+Additionally, for very large traveling salesman problems it is likely acceptable for the annealing to not reach the exact solution but rather something sufficiently good.
+As such, for very large problems it may be desirable to reduce the weight of the solution error so that states where the exact solution is not always found are acceptable.
