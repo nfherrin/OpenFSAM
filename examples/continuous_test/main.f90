@@ -114,11 +114,113 @@ PROGRAM continuous_test
   WRITE(*,'(A)')
   DEALLOCATE(func_sa%state_curr)
 
-  !combined functions solution
-  WRITE(*,'(A)')'---------------------------------combined funcs---------------------------------'
-  WRITE(*,'(A)')'Annealing: '
   max_step=max_step*600
+  !combined functions solution
+  WRITE(*,'(A)')'-----------------------------combined funcs perturb 6----------------------------'
+  WRITE(*,'(A)')'Annealing: '
   CALL setup_sa_func_comb()
+  !perturb 6 variables
+  func_sa%num_perturb=6
+  CALL func_sa%optimize()
+  errcomb=0.0D0
+  DO ios=1,6
+    errcomb=errcomb+((func_sa%state_best(ios)-minlocs(ios))/minlocs(ios))**2
+  ENDDO
+  errcomb=SQRT(errcomb)
+  WRITE(*,'(A)')'          min_erg   min_loc_1   min_loc_2   min_loc_3   min_loc_4   min_loc_5   min_loc_6'
+  WRITE(*,'(A,40ES12.4)')'ref: ',SUM(minvals(:)),minlocs(:)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-SUM(minvals(:)))/SUM(ABS(minvals(:))) &
+    ,errcomb,func_sa%total_steps
+  DEALLOCATE(func_sa%state_curr)
+
+  !combined functions solution
+  WRITE(*,'(A)')'-----------------------------combined funcs perturb 5----------------------------'
+  WRITE(*,'(A)')'Annealing: '
+  CALL setup_sa_func_comb()
+  !perturb 5 variables
+  func_sa%num_perturb=5
+  CALL func_sa%optimize()
+  errcomb=0.0D0
+  DO ios=1,6
+    errcomb=errcomb+((func_sa%state_best(ios)-minlocs(ios))/minlocs(ios))**2
+  ENDDO
+  errcomb=SQRT(errcomb)
+  WRITE(*,'(A)')'          min_erg   min_loc_1   min_loc_2   min_loc_3   min_loc_4   min_loc_5   min_loc_6'
+  WRITE(*,'(A,40ES12.4)')'ref: ',SUM(minvals(:)),minlocs(:)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-SUM(minvals(:)))/SUM(ABS(minvals(:))) &
+    ,errcomb,func_sa%total_steps
+  DEALLOCATE(func_sa%state_curr)
+
+  !combined functions solution
+  WRITE(*,'(A)')'-----------------------------combined funcs perturb 4----------------------------'
+  WRITE(*,'(A)')'Annealing: '
+  CALL setup_sa_func_comb()
+  !perturb 4 variables
+  func_sa%num_perturb=4
+  CALL func_sa%optimize()
+  errcomb=0.0D0
+  DO ios=1,6
+    errcomb=errcomb+((func_sa%state_best(ios)-minlocs(ios))/minlocs(ios))**2
+  ENDDO
+  errcomb=SQRT(errcomb)
+  WRITE(*,'(A)')'          min_erg   min_loc_1   min_loc_2   min_loc_3   min_loc_4   min_loc_5   min_loc_6'
+  WRITE(*,'(A,40ES12.4)')'ref: ',SUM(minvals(:)),minlocs(:)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-SUM(minvals(:)))/SUM(ABS(minvals(:))) &
+    ,errcomb,func_sa%total_steps
+  DEALLOCATE(func_sa%state_curr)
+
+  !combined functions solution
+  WRITE(*,'(A)')'-----------------------------combined funcs perturb 3----------------------------'
+  WRITE(*,'(A)')'Annealing: '
+  CALL setup_sa_func_comb()
+  !perturb 3 variables
+  func_sa%num_perturb=3
+  CALL func_sa%optimize()
+  errcomb=0.0D0
+  DO ios=1,6
+    errcomb=errcomb+((func_sa%state_best(ios)-minlocs(ios))/minlocs(ios))**2
+  ENDDO
+  errcomb=SQRT(errcomb)
+  WRITE(*,'(A)')'          min_erg   min_loc_1   min_loc_2   min_loc_3   min_loc_4   min_loc_5   min_loc_6'
+  WRITE(*,'(A,40ES12.4)')'ref: ',SUM(minvals(:)),minlocs(:)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-SUM(minvals(:)))/SUM(ABS(minvals(:))) &
+    ,errcomb,func_sa%total_steps
+  DEALLOCATE(func_sa%state_curr)
+
+  !combined functions solution
+  WRITE(*,'(A)')'-----------------------------combined funcs perturb 2----------------------------'
+  WRITE(*,'(A)')'Annealing: '
+  CALL setup_sa_func_comb()
+  !perturb 2 variables
+  func_sa%num_perturb=2
+  CALL func_sa%optimize()
+  errcomb=0.0D0
+  DO ios=1,6
+    errcomb=errcomb+((func_sa%state_best(ios)-minlocs(ios))/minlocs(ios))**2
+  ENDDO
+  errcomb=SQRT(errcomb)
+  WRITE(*,'(A)')'          min_erg   min_loc_1   min_loc_2   min_loc_3   min_loc_4   min_loc_5   min_loc_6'
+  WRITE(*,'(A,40ES12.4)')'ref: ',SUM(minvals(:)),minlocs(:)
+  WRITE(*,'(A,40ES12.4)')'SA:  ',func_sa%e_best,func_sa%state_best
+  WRITE(*,'(A)')' min_erg_err min_loc_err  num_steps'
+  WRITE(*,'(2ES12.4,I11)')ABS(func_sa%e_best-SUM(minvals(:)))/SUM(ABS(minvals(:))) &
+    ,errcomb,func_sa%total_steps
+  DEALLOCATE(func_sa%state_curr)
+
+  !combined functions solution
+  WRITE(*,'(A)')'-----------------------------combined funcs perturb 1----------------------------'
+  WRITE(*,'(A)')'Annealing: '
+  CALL setup_sa_func_comb()
+  !perturb 1 variables
+  func_sa%num_perturb=1
   CALL func_sa%optimize()
   errcomb=0.0D0
   DO ios=1,6

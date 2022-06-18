@@ -68,6 +68,8 @@ MODULE OpenFSAU
     !flag for dynamic damping, i.e. if true damping will reduce by a factor of 2 each time the
     !resvar value is found
     LOGICAL :: damp_dyn=.FALSE.
+    !Number of parameters to perturb for each neighbor
+    INTEGER :: num_perturb=0
     !energy calculation
     PROCEDURE(prototype_eg_cont),POINTER :: energy => NULL()
     CONTAINS
@@ -288,7 +290,8 @@ CONTAINS
 
     REAL(8) :: damp_app
     REAL(8) :: temp_r,max_ch,min_ch
-    INTEGER :: i
+    INTEGER :: i,temp_i,j
+    INTEGER, ALLOCATABLE :: perturb_locs(:)
 
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)temp_r=thisSA%e_best
@@ -310,14 +313,47 @@ CONTAINS
       max_ch=MAXVAL(s_curr)
     ENDIF
 
-    DO i=1,SIZE(s_curr)
-      CALL random_number(temp_r)
-      !perturb the state
-      get_neigh_cont(i)=s_curr(i)+(temp_r-0.5D0)*damp_app
-      !make sure it doesn't go out of bounds
+    IF(thisSA%num_perturb .LE. 0 .OR. thisSA%num_perturb .GE. SIZE(s_curr))THEN
+      !perturb all parameters
+      DO i=1,SIZE(s_curr)
+        CALL random_number(temp_r)
+        !perturb the state
+        get_neigh_cont(i)=s_curr(i)+(temp_r-0.5D0)*damp_app
+        !make sure it doesn't go out of bounds
 
-      get_neigh_cont(i)=MAX(MIN(get_neigh_cont(i),max_ch),min_ch)
-    ENDDO
+        get_neigh_cont(i)=MAX(MIN(get_neigh_cont(i),max_ch),min_ch)
+      ENDDO
+    ELSE
+      get_neigh_cont=s_curr
+      !perturb num_perturb parameters
+      ALLOCATE(perturb_locs(thisSA%num_perturb))
+      perturb_locs=0
+      i=1
+      DO WHILE(i .LE. thisSA%num_perturb)
+        !get a random index for the parameters
+        CALL random_number(temp_r)
+        temp_i=1+FLOOR(temp_r*SIZE(s_curr))
+        j=i
+        DO j=1,i-1
+          IF(perturb_locs(j) .EQ. temp_i)EXIT
+        ENDDO
+        !if we exited early then we already found the index so we don't use that index
+        IF(j .EQ. i)THEN
+          perturb_locs(j)=temp_i
+          i=i+1
+        ENDIF
+      ENDDO
+      DO j=1,thisSA%num_perturb
+        CALL random_number(temp_r)
+        i=perturb_locs(j)
+        !perturb the state
+        get_neigh_cont(i)=s_curr(i)+(temp_r-0.5D0)*damp_app
+        !make sure it doesn't go out of bounds
+
+        get_neigh_cont(i)=MAX(MIN(get_neigh_cont(i),max_ch),min_ch)
+      ENDDO
+      DEALLOCATE(perturb_locs)
+    ENDIF
 
   ENDFUNCTION get_neigh_cont
 

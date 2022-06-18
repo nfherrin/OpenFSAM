@@ -35,6 +35,7 @@ To initialize, the user must specify the following variables
   12. \[For continuous annealing problems ONLY\] The minimum state variable value, `<sa_object>%smin`, and the maximum state variable value, `<sa_object>%smax`, may be set (`REAL(8)` default: `0.0`).
     If they are not set or if the maximum is set below the minimum, the minimum and maximum values are taken from the minimum and maximum values of the initial state variables.
   13. \[For continuous annealing problems ONLY\] Dynamic damping option `<sa_object>%damp_dyn` (`LOGICAL` default: `.FALSE.`).
+  14. \[For continuous annealing problems ONLY\] Number of parameters to perturb for generating neighbors `<sa_object>%num_perturb` (`INTEGER` default: 0).
 
 A brief explanation of the user initialized variables:
   1. The maximum number of steps, `n`, is the most steps the annealing counter will reach before stopping.
@@ -85,6 +86,9 @@ A brief explanation of the user initialized variables:
     As such, dynamic damping ONLY comes into play if a non-zero restart value is given.
     This can be particularly useful for continuous problems where the user may wish to start with a large (often the default) damping factor, to traverse the whole domain.
     Coupled with dynamic damping and a low (but nonzero) restart value, this allows the user to gradually decrease the effective portion of the domain that is being searched towards the end of the annealing.
+  14. \[For continuous annealing problems ONLY\] When annealing continuous functions it can sometimes be useful to not perturb every parameter when generating neighbors.
+    To this end, the user can specify the number of parameters to perturb each iteration during generation of neighbors.
+    This can be particularly useful when the energy is heavily dependent on some parameters and less dependent on others.
 
 The user may now use the simulated annealing optimization in their code by calling `<sa_object>%optimize`.
 This subroutine results in the optimal state array found stored in `<sa_object>%state_best` and the energy of that state is stored in `<sa_object>%e_best`.
@@ -200,11 +204,12 @@ With the function minimization problem setup and simulated annealing initializat
 
 Which can then view the optimal state array in the form of `func_sa%state_best` with an energy (function value) of `func_sa%e_best`.
 
-This is done for all six functions and a sum of all six functions.
+This is done for all six functions and a sum of all six functions where each function is dependent upon a different variable.
 It can be observed that the sum of all functions takes many more iterations to get a good solution and still the solution is not as good as the individual optimizations.
 This is because continuous simulated annealing perturbs every parameter, so a decrease may occur in which one parameter moved in a way that increased the energy, while not increasing it as much as the other perturbations decreased it.
 This demonstrates that for continuous simulated annealing, it is preferable to keep the number of parameters as low as possible.
 In this case, since the energy is a sum of each function, then the energy does not rely on any cross parameter terms, so that each portion of the energy may be optimized independently.
+Indeed, it can be observed in the example that reducing the number of perturbed parameters each iteration is effective in reaching a similar final energy while greatly reducing the number of total iterations used to find said energy.
 
 ---
 ## Simulated Annealing for Simulated Annealing

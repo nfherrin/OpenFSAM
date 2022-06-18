@@ -22,6 +22,7 @@ CONTAINS
     sa_ts_simanneal%damping=0.0D0
     sa_ts_simanneal%resvar=50.0D0
     sa_ts_simanneal%damp_dyn=.TRUE.
+    sa_ts_simanneal%num_perturb=1
     ALLOCATE(sa_ts_simanneal%state_curr(3))
     !all state variables start at a random value and use a functional transform to actually get
     !their values. This is so they can all use the same damping and max/mins
