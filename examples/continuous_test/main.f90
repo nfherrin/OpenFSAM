@@ -2,10 +2,10 @@
 PROGRAM continuous_test
   USE OpenFSAU
   IMPLICIT NONE
-  REAL(8) :: minvals(6),minlocs(6),max_step,t_max,t_min,smin,smax,damping,resvar,errcomb
+  REAL(8) :: minvals(6),minlocs(6),t_max,t_min,smin,smax,damping,resvar,errcomb
   CHARACTER(64) :: cool_opt
   LOGICAL :: mon_cool,damp_dyn
-  INTEGER :: ios
+  INTEGER :: ios,max_step
 
   TYPE(sa_cont_type) :: func_sa
 
@@ -365,7 +365,7 @@ CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE setup_sa_func_comb()
-    REAL(8) :: minstart,inguess,locfind(1),temp_r
+    REAL(8) :: temp_r
     INTEGER :: i
     func_sa%max_step=max_step
     func_sa%t_max=t_max
@@ -441,6 +441,9 @@ CONTAINS
     REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
     REAL(8) :: func1_eg
 
+    !this is to avoid the make catch complaints
+    IF(.FALSE.)write(*,*)thisSA%cool_opt
+
     func1_eg=func1(state_ord(1))
   ENDFUNCTION func1_eg
 
@@ -449,6 +452,9 @@ CONTAINS
     CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
     REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
     REAL(8) :: func2_eg
+
+    !this is to avoid the make catch complaints
+    IF(.FALSE.)write(*,*)thisSA%cool_opt
 
     func2_eg=func2(state_ord(1))
   ENDFUNCTION func2_eg
@@ -459,6 +465,9 @@ CONTAINS
     REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
     REAL(8) :: func3_eg
 
+    !this is to avoid the make catch complaints
+    IF(.FALSE.)write(*,*)thisSA%cool_opt
+
     func3_eg=func3(state_ord(1))
   ENDFUNCTION func3_eg
 
@@ -467,6 +476,9 @@ CONTAINS
     CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
     REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
     REAL(8) :: func4_eg
+
+    !this is to avoid the make catch complaints
+    IF(.FALSE.)write(*,*)thisSA%cool_opt
 
     func4_eg=func4(state_ord(1))
   ENDFUNCTION func4_eg
@@ -477,6 +489,9 @@ CONTAINS
     REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
     REAL(8) :: func5_eg
 
+    !this is to avoid the make catch complaints
+    IF(.FALSE.)write(*,*)thisSA%cool_opt
+
     func5_eg=func5(state_ord(1))
   ENDFUNCTION func5_eg
 
@@ -486,6 +501,9 @@ CONTAINS
     REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
     REAL(8) :: func6_eg
 
+    !this is to avoid the make catch complaints
+    IF(.FALSE.)write(*,*)thisSA%cool_opt
+
     func6_eg=func6(state_ord(1))
   ENDFUNCTION func6_eg
 
@@ -494,6 +512,9 @@ CONTAINS
     CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
     REAL(8),DIMENSION(:),INTENT(IN) :: state_ord
     REAL(8) :: comb_eg
+
+    !this is to avoid the make catch complaints
+    IF(.FALSE.)write(*,*)thisSA%cool_opt
 
     comb_eg=0.0D0
     comb_eg=comb_eg+func1(state_ord(1))

@@ -44,6 +44,9 @@ CONTAINS
     INTEGER :: i
     REAL(8) :: l2err,l2its
 
+    !this line is literally just to insure that it doesn't complain about not using the variables
+    IF(.FALSE.)i=thisSA%size_states
+
     l2err=0.0
     l2its=0.0
     !you want to do it many times so that your energy isn't too dependent on randomness
