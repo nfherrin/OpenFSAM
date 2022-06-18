@@ -1,5 +1,5 @@
-!A Fortran based neural network accelerated simulated annealing software.
-PROGRAM fortNNASA
+!A simulated annealing for simulated annealing parameters.
+PROGRAM sinannealing_sa
   USE globals
   USE infuncs
   USE outfuncs
@@ -13,14 +13,16 @@ PROGRAM fortNNASA
   !sets up the simulated annealing for the traveling salesman problem
   CALL setup_sa_ts_sa()
 
-  WRITE(*,*)sa_ts_simanneal%energy(state_transform(sa_ts_simanneal%state_curr(:)))
-  WRITE(*,*)sa_ts_simanneal%state_curr(:)
-  WRITE(*,*)state_transform(sa_ts_simanneal%state_curr(:))
+  WRITE(*,'(A,40ES12.3)')'pre-optimized state: ',sa_ts_simanneal%state_curr(:)
+  WRITE(*,'(A,40ES12.3)')'pre-optimized transformed state: ',state_transform(sa_ts_simanneal%state_curr(:))
+  WRITE(*,'(A,40ES12.3)')'pre-optimized energy: ',sa_ts_simanneal%energy(sa_ts_simanneal%state_curr(:))
 
+  WRITE(*,'(A)')'Annealing:'
   CALL sa_ts_simanneal%optimize()
 
-  WRITE(*,*)sa_ts_simanneal%energy(state_transform(sa_ts_simanneal%state_curr(:)))
-  WRITE(*,*)sa_ts_simanneal%state_curr(:)
-  WRITE(*,*)state_transform(sa_ts_simanneal%state_curr(:))
+  WRITE(*,'(A,40ES12.3)')'post-optimized state: ',sa_ts_simanneal%state_curr(:)
+  WRITE(*,'(A,40ES12.3)')'post-optimized transformed state: ',state_transform(sa_ts_simanneal%state_curr(:))
+  WRITE(*,'(A,40ES12.3)')'post-optimized energy: ',sa_ts_simanneal%e_best
+  WRITE(*,'(A,40I0)')'Total iterations: ',sa_ts_simanneal%total_steps
 
-END PROGRAM fortNNASA
+ENDPROGRAM sinannealing_sa
