@@ -281,18 +281,19 @@ CONTAINS
     IF(.FALSE.)temp_r=thisSA%e_best
 
     get_neigh_comb=s_curr
-    !get switch indeces
-    DO
+    !make sure they're actually different
+    DO WHILE(SUM(ABS(get_neigh_comb-s_curr)) .EQ. 0)
+      !get switch indeces
       CALL random_number(temp_r)
       j1=1+FLOOR(SIZE(s_curr)*temp_r)
       CALL random_number(temp_r)
       j2=1+FLOOR(SIZE(s_curr)*temp_r)
-      !make sure they're actually different
-      IF(j1 .NE. j2)EXIT
+
+      !set the new neighbor by swapping those points
+      get_neigh_comb=s_curr
+      get_neigh_comb(j1)=s_curr(j2)
+      get_neigh_comb(j2)=s_curr(j1)
     ENDDO
-    !set the new neighbor by swapping those points
-    get_neigh_comb(j1)=s_curr(j2)
-    get_neigh_comb(j2)=s_curr(j1)
   ENDFUNCTION get_neigh_comb
 
 !---------------------------------------------------------------------------------------------------
