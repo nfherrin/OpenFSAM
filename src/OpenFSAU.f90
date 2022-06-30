@@ -1,4 +1,7 @@
-!simulated annealing functions
+!OpenFSAU is licensed under the MIT License.
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!> @brief Module simulated annealing functions.
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE OpenFSAU
   IMPLICIT NONE
   PRIVATE
@@ -6,78 +9,78 @@ MODULE OpenFSAU
 
   REAL(8),PARAMETER :: pi=4.D0*ATAN(1.D0)
 
-!the base simulated annealing solver type
+!> the base simulated annealing solver type
   TYPE,ABSTRACT :: sa_type_base
-    !number of points in a state
+    !> number of points in a state
     INTEGER :: size_states=0
-    !maximum number of SA iterations
+    !> maximum number of SA iterations
     INTEGER :: max_step=100
-    !total number of steps it took
+    !> total number of steps it took
     INTEGER :: total_steps=0
-    !alpha value for cooling
+    !> alpha value for cooling
     REAL(8) :: alpha=0.01D0
-    !maximum temperature
+    !> maximum temperature
     REAL(8) :: t_max=100.0D0
-    !minimum temperature
+    !> minimum temperature
     REAL(8) :: t_min=0.0D0
-    !best energy
+    !> best energy
     REAL(8) :: e_best=1.0D+307
-    !cooling option
+    !> cooling option
     CHARACTER(64) :: cool_opt='LinAdd'
-    !whether cooling is monotonic or not
+    !> whether cooling is monotonic or not
     LOGICAL :: mon_cool=.TRUE.
-    !progress bar
+    !> progress bar
     LOGICAL :: prog_bar=.FALSE.
-    !the initial temperature to start resetting the current state to the best found state
-    !when this temperature is reached. This temperature is halved every-time it is reached.
+    !> the initial temperature to start resetting the current state to the best found state
+    !>    when this temperature is reached. This temperature is halved every-time it is reached.
     REAL(8) :: resvar=0.0d0
-    !Cooling schedule
+    !> Cooling schedule
     PROCEDURE(prototype_cooling),POINTER :: cool => NULL()
     CONTAINS
-      !optimization subroutine using simulated annealing
+      !> optimization subroutine using simulated annealing
       PROCEDURE :: optimize
   ENDTYPE sa_type_base
 
-!combinatorial simulated annealing type
+!> combinatorial simulated annealing type
   TYPE,EXTENDS(sa_type_base) :: sa_comb_type
-    !combinatorial problem state array (for perturbing combinatorial problems)
+    !> combinatorial problem state array (for perturbing combinatorial problems)
     INTEGER, POINTER, DIMENSION(:) :: state_curr
-    !combinatorial problem neighbor array after pertubation
+    !> combinatorial problem neighbor array after pertubation
     INTEGER, ALLOCATABLE, DIMENSION(:) :: state_neigh
-    !best energy state
+    !> best energy state
     INTEGER, ALLOCATABLE, DIMENSION(:) :: state_best
-    !energy calculation
+    !> energy calculation
     PROCEDURE(prototype_eg_comb),POINTER :: energy => NULL()
     CONTAINS
-      !neighbor retrieval
+      !> neighbor retrieval
       PROCEDURE,PASS :: get_neigh => get_neigh_comb
   ENDTYPE sa_comb_type
 
-!continuous simulated annealing type
+!> continuous simulated annealing type
   TYPE,EXTENDS(sa_type_base) :: sa_cont_type
-    !continuous problem state array (for perturbing continuous problem values)
+    !> continuous problem state array (for perturbing continuous problem values)
     REAL(8), POINTER, DIMENSION(:) :: state_curr
-    !continuous problem neighbor array after pertubation
+    !> continuous problem neighbor array after pertubation
     REAL(8), ALLOCATABLE, DIMENSION(:) :: state_neigh
-    !best energy state
+    !> best energy state
     REAL(8), ALLOCATABLE, DIMENSION(:) :: state_best
-    !damping factor
+    !> damping factor
     REAL(8) :: damping=0.0D0
-    !upper and lower bounds, will be set to bounds of initial state if not changed
+    !> upper and lower bounds, will be set to bounds of initial state if not changed
     REAL(8) :: smin=0.0D0,smax=0.0D0
-    !flag for dynamic damping, i.e. if true damping will reduce by a factor of 2 each time the
-    !resvar value is found
+    !> flag for dynamic damping, i.e. if true damping will reduce by a factor of 2 each time the
+    !>    resvar value is found
     LOGICAL :: damp_dyn=.FALSE.
-    !Number of parameters to perturb for each neighbor
+    !> Number of parameters to perturb for each neighbor
     INTEGER :: num_perturb=0
-    !energy calculation
+    !> energy calculation
     PROCEDURE(prototype_eg_cont),POINTER :: energy => NULL()
     CONTAINS
-      !neighbor retrieval
+      !> neighbor retrieval
       PROCEDURE,PASS :: get_neigh => get_neigh_cont
   ENDTYPE sa_cont_type
 
-!Simple abstract interface for a combinatorial energy computation function
+!> Simple abstract interface for a combinatorial energy computation function
   ABSTRACT INTERFACE
     FUNCTION prototype_eg_comb(thisSA,state_val)
       IMPORT :: sa_comb_type
@@ -87,7 +90,7 @@ MODULE OpenFSAU
     ENDFUNCTION prototype_eg_comb
   ENDINTERFACE
 
-!Simple abstract interface for a continuous energy computation function
+!> Simple abstract interface for a continuous energy computation function
   ABSTRACT INTERFACE
     FUNCTION prototype_eg_cont(thisSA,state_val)
       IMPORT :: sa_cont_type
@@ -97,7 +100,7 @@ MODULE OpenFSAU
     ENDFUNCTION prototype_eg_cont
   ENDINTERFACE
 
-!Simple abstract interface for a cooling function
+!> Simple abstract interface for a cooling function
   ABSTRACT INTERFACE
     FUNCTION prototype_cooling(thisSA,tmin,tmax,alpha,k,n)
       IMPORT :: sa_type_base
@@ -110,7 +113,10 @@ MODULE OpenFSAU
 
 CONTAINS
 
-  !optimize through simulated annealing
+!---------------------------------------------------------------------------------------------------
+!> @brief This subroutine optimizes through simulated annealing
+!> @param thisSA - the simulated annealing object
+!>
   SUBROUTINE optimize(thisSA)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8) :: e_neigh
@@ -235,7 +241,12 @@ CONTAINS
     ENDSELECT
   ENDSUBROUTINE optimize
 
-  !function for the acceptance probability
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes the acceptance probability
+!> @param e_current - the current energy
+!> @param e_current - the neighboring energy
+!> @param e_current - the current temperature
+!>
   FUNCTION accept_prob(e_current,e_neigh,t_current)
     REAL(8),INTENT(IN) :: e_current,e_neigh,t_current
     REAL(8) :: accept_prob
@@ -253,7 +264,11 @@ CONTAINS
     IF(ISNAN(accept_prob))accept_prob=0.0D0
   ENDFUNCTION accept_prob
 
-  !get a new neighbor state for a combinatorial problem
+!---------------------------------------------------------------------------------------------------
+!> @brief This function gets a new neighbor state for a combinatorial problem
+!> @param thisSA - the combinatorial simulated annealing object
+!> @param s_curr - the current state
+!>
   FUNCTION get_neigh_comb(thisSA,s_curr)
     CLASS(sa_comb_type),INTENT(INOUT) :: thisSA
     INTEGER,INTENT(IN) :: s_curr(:)
@@ -280,7 +295,14 @@ CONTAINS
     get_neigh_comb(j2)=s_curr(j1)
   ENDFUNCTION get_neigh_comb
 
-  !get a new neighbor state for a continuous problem
+!---------------------------------------------------------------------------------------------------
+!> @brief This function gets a new neighbor state for a continuous annealing problem
+!> @param thisSA - the continuous simulated annealing object
+!> @param s_curr - the current state
+!> @param damping - the damping factor
+!> @param smax - maximum state value
+!> @param smin - minimum state value
+!>
   FUNCTION get_neigh_cont(thisSA,s_curr,damping,smax,smin)
     CLASS(sa_cont_type),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: s_curr(:)
@@ -357,7 +379,10 @@ CONTAINS
 
   ENDFUNCTION get_neigh_cont
 
-  !set the cooling schedule
+!---------------------------------------------------------------------------------------------------
+!> @brief This subroutine sets the cooling schedule
+!> @param thisSA - the simulated annealing object
+!>
   SUBROUTINE set_cooling(thisSA)
     CLASS(sa_type_base) :: thisSA
 
@@ -387,7 +412,15 @@ CONTAINS
     ENDSELECT
   ENDSUBROUTINE set_cooling
 
-  !linear multiplicative cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes linear multiplicative cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION lin_mult_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -400,7 +433,15 @@ CONTAINS
     lin_mult_cool=tmax/(1.0D0+alpha*k)
   ENDFUNCTION lin_mult_cool
 
-  !natural log exponential multiplicative cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes natural log exponential multiplicative cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION exp_mult_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -413,7 +454,15 @@ CONTAINS
     exp_mult_cool=tmax*alpha**k
   ENDFUNCTION exp_mult_cool
 
-  !logarithmic multiplicative cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes logarithmic multiplicative cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION log_mult_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -426,7 +475,15 @@ CONTAINS
     log_mult_cool=tmax/(1.0D0+alpha*LOG10(k+1.0D0))
   ENDFUNCTION log_mult_cool
 
-  !quadratic multiplicative cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes quadratic multiplicative cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION quad_mult_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -439,7 +496,15 @@ CONTAINS
     quad_mult_cool=tmax/(1.0+alpha*(k*1.0D0)**2)
   ENDFUNCTION quad_mult_cool
 
-  !linear additive cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes linear additive cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION lin_add_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -452,7 +517,15 @@ CONTAINS
     lin_add_cool=tmin+(tmax-tmin)*(n*1.0D0-k)/(n*1.0D0)
   ENDFUNCTION lin_add_cool
 
-  !quadratic additive cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes quadratic additive cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION quad_add_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -465,7 +538,15 @@ CONTAINS
     quad_add_cool=tmin+(tmax-tmin)*((n*1.0D0-k)/(n*1.0D0))**2
   ENDFUNCTION quad_add_cool
 
-  !exponential additive cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes exponential additive cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION exp_add_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
@@ -478,7 +559,15 @@ CONTAINS
     exp_add_cool=tmin+(tmax-tmin)/(1.0D0+EXP(2.0D0*LOG(tmax-tmin)*(k-0.5D0*n)/(n*1.0D0)))
   ENDFUNCTION exp_add_cool
 
-  !trigonometric additive cooling
+!---------------------------------------------------------------------------------------------------
+!> @brief This function computes trigonometric additive cooling temperature
+!> @param thisSA - the simulated annealing object
+!> @param tmin - minimum temperature
+!> @param tmax - maximum temperature
+!> @param alpha - multiplicative cooling parameter
+!> @param k - current step
+!> @param n - maximum number of steps
+!>
   FUNCTION trig_add_cool(thisSA,tmin,tmax,alpha,k,n)
     CLASS(sa_type_base),INTENT(INOUT) :: thisSA
     REAL(8),INTENT(IN) :: tmin,tmax,alpha
