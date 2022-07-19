@@ -167,7 +167,7 @@ CONTAINS
     IF(thisSA%prog_bar)WRITE(*,'(A)',ADVANCE='NO')'PROGRESS:'
     CALL CPU_TIME(start)
     !actual simulated annealing happens here
-    DO WHILE(step .LE. thisSA%max_step .AND. t_curr .GE. thisSA%t_min)
+    DO WHILE(step .LT. thisSA%max_step .AND. t_curr .GT. thisSA%t_min)
       thisSA%total_steps=thisSA%total_steps+1
       !get a new neighbor and compute energy
       SELECTTYPE(thisSA)
