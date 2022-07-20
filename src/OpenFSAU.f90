@@ -163,7 +163,7 @@ CONTAINS
 
     t_curr=thisSA%t_max
     step=0
-    thisSA%total_steps=-1
+    thisSA%total_steps=0
     IF(thisSA%prog_bar)WRITE(*,'(A)',ADVANCE='NO')'PROGRESS:'
     CALL CPU_TIME(start)
     !actual simulated annealing happens here
