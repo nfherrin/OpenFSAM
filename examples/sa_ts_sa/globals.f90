@@ -1,6 +1,6 @@
 !globals module
 MODULE globals
-  USE OpenFSAU
+  USE OpenFSAM
   IMPLICIT NONE
 
   !customer locations

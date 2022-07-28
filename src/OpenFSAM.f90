@@ -1,8 +1,8 @@
-!OpenFSAU is licensed under the MIT License.
+!OpenFSAM is licensed under the MIT License.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module simulated annealing functions.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE OpenFSAU
+MODULE OpenFSAM
   IMPLICIT NONE
   PRIVATE
   PUBLIC sa_comb_type,sa_cont_type
@@ -580,4 +580,4 @@ CONTAINS
 
     trig_add_cool=tmin+0.5D0*(tmax-tmin)*(1.0D0+COS(k*pi/(n*1.0D0)))
   ENDFUNCTION trig_add_cool
-END MODULE OpenFSAU
+END MODULE OpenFSAM

@@ -1,15 +1,15 @@
-# OpenFSAU
+# OpenFSAM
 
 ---
 ##Description
 ---
-OpenFSAU (**O**pen source **F**ortran **S**imulated **A**nnealing **U**tility).
-A Fortran based open source simulated annealing utility.
+OpenFSAM (**O**pen source **F**ortran **S**imulated **A**nnealing **M**odule).
+A Fortran based open source simulated annealing module.
 
-This utility consists of a single module that can be generally assigned to solve a [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) optimization problem.
+This module consists of a single module that can be generally assigned to solve a [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) optimization problem.
 A user can easily add this module to any existing modern Fortran program since the module is self contained and sufficiently abstracted.
 
-To use the simulated annealing module, point to it properly in your make file and add `USE OpenFSAU` to the module/program that is using it.
+To use the simulated annealing module, point to it properly in your make file and add `USE OpenFSAM` to the module/program that is using it.
 The simulated annealing module has two public types `sa_comb_type` and `sa_cont_type`.
 `sa_comb_type` is a combinatorial type simulated annealing optimizer and `sa_cont_type` is a continuous function simulated annealing optimizer.
 To use, create a simulated annealing object with `TYPE(sa_comb_type) :: <sa_object>` or  `TYPE(sa_cont_type) :: <sa_object>`.
@@ -97,7 +97,7 @@ This subroutine results in the optimal state array found stored in `<sa_object>%
 ## Simulated Annealing for the Traveling Salesman Problem
 ---
 
-An example of usage of this utility for a combinatorial problem is given in `examples/traveling_sales_general/` in which simulated annealing is used to optimize a traveling salesman problem.
+An example of usage of this module for a combinatorial problem is given in `examples/traveling_sales_general/` in which simulated annealing is used to optimize a traveling salesman problem.
 The simulated annealing object is defined in `globals.f90` as
 ```
   TYPE(sa_comb_type) :: ts_simanneal
@@ -151,7 +151,7 @@ Which can then view the optimal state array in the form of `ts_simanneal%state_b
 ## Simulated Annealing for Continuous Function Optimization
 ---
 
-An example of usage of this utility for continuous problems is given in `examples/continuous_test/` in which simulated annealing is used to optimize six functions and a sum of all six functions.
+An example of usage of this module for continuous problems is given in `examples/continuous_test/` in which simulated annealing is used to optimize six functions and a sum of all six functions.
 The simulated annealing object is defined in `main.f90` as
 ```
   TYPE(sa_cont_type) :: func_sa

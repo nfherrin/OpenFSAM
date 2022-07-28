@@ -1,6 +1,6 @@
 !Solution for 6 different non-monotonic functions and their combination using SA.
 PROGRAM continuous_test
-  USE OpenFSAU
+  USE OpenFSAM
   IMPLICIT NONE
   REAL(8) :: minvals(6),minlocs(6),t_max,t_min,smin,smax,damping,resvar,errcomb
   CHARACTER(64) :: cool_opt

@@ -37,7 +37,7 @@ MOD_FILTER := $(FILTER:.f90=.mod)
 #-----------------------------------------------------------------------------------
 #Add simple compile SIMANN files
 #-----------------------------------------------------------------------------------
-SIMANN_SRC := $(SIMANN)/OpenFSAU.f90
+SIMANN_SRC := $(SIMANN)/OpenFSAM.f90
 
 SIMANN_OBJ := $(patsubst %.f90,%.o,$(notdir $(SIMANN_SRC)))
 
@@ -95,4 +95,4 @@ $(SIMANN_MOD):	%.mod:	$(filter %.f90, $(SIMANN_SRC))
 #Dependency List
 #Use [gfortran -M -cpp *.f90] repeatedly until clean compile to update rules below
 #-----------------------------------------------------------------------------------
-main.o: main.f90 OpenFSAU.mod
+main.o: main.f90 OpenFSAM.mod
