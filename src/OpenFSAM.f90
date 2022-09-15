@@ -122,6 +122,8 @@ CONTAINS
     REAL(8) :: e_neigh
     INTEGER :: step
     REAL(8) :: temp_r,start,finish,e_curr,t_curr
+    e_neigh=1000.0D0
+    e_curr=1000.0D0
 
     CALL set_cooling(thisSA)
 

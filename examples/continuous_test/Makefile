@@ -8,10 +8,10 @@ debug:    TYPE := _Debug
 catch:    TYPE := _Catch
 coverage: TYPE := _Coverage
 
-all:      OPT := -O3
-debug:    OPT := -O0 -g -fbacktrace -ffpe-trap=zero,overflow,underflow
+all:      OPT := -O3 -Wall -Werror
+debug:    OPT := -O0 -g -fbacktrace -ffpe-trap=zero,overflow,underflow -Wall -Werror
 catch:    OPT := -O0 -g -Wall -W -Wsurprising -Werror
-coverage: OPT := -O0 -g --coverage
+coverage: OPT := -O0 -g --coverage -Wall -Werror
 
 #-----------------------------------------------------------------------------------
 #Directory Paths
