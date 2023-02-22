@@ -1,7 +1,7 @@
 # OpenFSAM
 
 ---
-##Description
+## Description
 ---
 OpenFSAM (**O**pen source **F**ortran **S**imulated **A**nnealing **M**odule).
 A Fortran based open source simulated annealing module.
@@ -221,7 +221,7 @@ Energy is typically expressed as some monotonically increasing function of the t
 Since it is a combinatorial problem, damping factors and minimums/maximum state values are not a part of the annealing problem.
 If we fix the energy function (to just the path length), then for a given additive cooling schedule, the effectiveness will be determined by the maximum temperature, the minimum temperature, and the number of iterations.
 Well this is then a continuous optimization problem, figuring out which temperature bounds and how many steps provide the optimal simulated annealing for a given traveling salesman problem size.
-Similarly an multiplicative cooling schedule will depend on alpha and the temperature bounds (but not on the number of steps if they are set sufficiently large).
+Similarly a multiplicative cooling schedule will depend on alpha and the temperature bounds (but not on the number of steps if they are set sufficiently large).
 
 One of the issues here is that determining how good the result of a simulated annealing calculation is can be difficult for large traveling salesman problems since a reference solution must be known.
 However, it can be noticed that the only factor in the energy for a traveling salesman problem is total path length.
