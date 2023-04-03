@@ -80,6 +80,25 @@ MODULE OpenFSAM
       PROCEDURE,PASS :: get_neigh => get_neigh_cont
   ENDTYPE sa_cont_type
 
+!> discrete simulated annealing type
+  TYPE,EXTENDS(sa_type_base) :: sa_disc_type
+    !> discrete problem state array (for pertrubing discrete problem values)
+    INTEGER, POINTER, DIMENSION(:) :: state_curr
+    !> discrete problem neighbor array after pertubation
+    INTEGER, ALLOCATABLE, DIMENSION(:) :: state_neigh
+    !> best energy state
+    INTEGER, ALLOCATABLE, DIMENSION(:) :: state_best
+    !> acceptable discrete variable values
+    INTEGER, ALLOCATABLE, DIMENSION(:) :: var_values
+    !> Number of parameters to perturb for each neighbor
+    INTEGER :: num_perturb=0
+    !> energy calculation
+    PROCEDURE(prototype_eg_disc), POINTER :: energy => NULL()
+    CONTAINS
+      !> neighbor retrieval
+      PROCEDURE, PASS :: get_neigh => get_neigh_disc
+  ENDTYPE sa_disc_type
+
 !> Simple abstract interface for a combinatorial energy computation function
   ABSTRACT INTERFACE
     FUNCTION prototype_eg_comb(thisSA,state_val)
@@ -99,6 +118,17 @@ MODULE OpenFSAM
       REAL(8) :: prototype_eg_cont
     ENDFUNCTION prototype_eg_cont
   ENDINTERFACE
+
+!> Simple abstract interface for a discrete energy computation function
+  ABSTRACT INTERFACE
+    FUNCTION prototype_eg_disc(thisSA,state_val)
+      IMPORT :: sa_disc_type
+      CLASS(sa_disc_type),INTENT(INOUT) :: thisSA
+      INTEGER,DIMENSION(:),INTENT(IN) :: state_val
+      REAL(8) :: prototype_eg_disc
+    ENDFUNCTION prototype_eg_disc
+  ENDINTERFACE
+
 
 !> Simple abstract interface for a cooling function
   ABSTRACT INTERFACE
@@ -161,6 +191,19 @@ CONTAINS
           thisSA%smin=MINVAL(thisSA%state_curr)
         ENDIF
         IF(thisSA%damping .LE. 1.0D-15)thisSA%damping=ABS(thisSA%smax-thisSA%smin)/2.0D0
+      TYPEIS(sa_disc_type)
+        thisSA%size_states=SIZE(thisSA%state_curr)
+        IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
+          ALLOCATE(thisSA%state_neigh(thisSA%size_states))
+        ENDIF
+        IF(.NOT. ALLOCATED(thisSA%state_best))THEN
+          ALLOCATE(thisSA%state_best(thisSA%size_states))
+        ENDIF
+        thisSA%state_neigh=thisSA%state_curr
+        thisSA%state_best=thisSA%state_curr
+        !set energy to current energy
+        e_curr=thisSA%energy(thisSA%state_curr)
+        thisSA%e_best=e_curr
     ENDSELECT
 
     t_curr=thisSA%t_max
@@ -179,6 +222,9 @@ CONTAINS
         TYPEIS(sa_cont_type)
           thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr,thisSA%damping,thisSA%smax,thisSA%smin)
           e_neigh=thisSA%energy(thisSA%state_neigh)
+        TYPEIS(sa_disc_type)
+          thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr)
+          e_neigh=thisSA%energy(thisSA%state_neigh)
       ENDSELECT
       !check and see if we accept the new temperature (lower temps always accepted)
       CALL random_number(temp_r)
@@ -191,6 +237,8 @@ CONTAINS
           TYPEIS(sa_comb_type)
             thisSA%state_curr=thisSA%state_neigh
           TYPEIS(sa_cont_type)
+            thisSA%state_curr=thisSA%state_neigh
+          TYPEIS(sa_disc_type)
             thisSA%state_curr=thisSA%state_neigh
         ENDSELECT
         e_curr=e_neigh
@@ -214,6 +262,8 @@ CONTAINS
             thisSA%state_best=thisSA%state_neigh
           TYPEIS(sa_cont_type)
             thisSA%state_best=thisSA%state_neigh
+          TYPEIS(sa_disc_type)
+            thisSA%state_best=thisSA%state_neigh
         ENDSELECT
       ENDIF
       IF(.NOT. thisSA%mon_cool)t_curr=t_curr*(1.0+(e_curr-thisSA%e_best)/e_curr)
@@ -228,6 +278,9 @@ CONTAINS
             e_curr=thisSA%e_best
             thisSA%state_curr=thisSA%state_best
             IF(thisSA%damp_dyn)thisSA%damping=thisSA%damping/2.0D0
+          TYPEIS(sa_disc_type)
+            e_curr=thisSA%e_best
+            thisSA%state_curr=thisSA%state_best
         ENDSELECT
       ENDIF
     ENDDO
@@ -239,6 +292,8 @@ CONTAINS
       TYPEIS(sa_comb_type)
         thisSA%state_curr=thisSA%state_best
       TYPEIS(sa_cont_type)
+        thisSA%state_curr=thisSA%state_best
+      TYPEIS(sa_disc_type)
         thisSA%state_curr=thisSA%state_best
     ENDSELECT
   ENDSUBROUTINE optimize
@@ -381,6 +436,44 @@ CONTAINS
     ENDIF
 
   ENDFUNCTION get_neigh_cont
+
+!---------------------------------------------------------------------------------------------------
+!> @brief This function gets a new neighbor state for a discrete annealing problem
+!> @param thisSA - the discrete simulated annealing object
+!> @param s_curr - the current state
+!>
+  FUNCTION get_neigh_disc(thisSA,s_curr)
+    CLASS(sa_disc_type),INTENT(INOUT) :: thisSA
+    INTEGER,INTENT(IN) :: s_curr(:)
+    INTEGER,DIMENSION(SIZE(s_curr)) :: get_neigh_disc
+
+    REAL(8) :: temp_r
+    INTEGER :: i,temp_i,j,val,num_perturb
+    REAL(8), DIMENSION(SIZE(thisSA%var_values)) :: rand
+
+    !this line is literally just to ensure that it doesn't complain about not using the variables
+    IF(.FALSE.)temp_r=thisSA%e_best
+
+    !perturb at least one parameter
+    num_perturb=MAX(1,thisSA%num_perturb)
+
+    i=1
+    DO WHILE(i .LE. num_perturb)
+      !pick parameter to perturb
+      CALL random_number(temp_r)
+      j=1+FLOOR(SIZE(s_curr)*temp_r)
+      !pick new discrete value
+      CALL random_number(rand)
+      val=thisSA%var_values(MAXLOC(rand,DIM=1))
+      !make sure that a new value is chosen
+      IF(val .EQ. s_curr(j))THEN
+        val=thisSA%var_values(MINLOC(rand,DIM=1))
+      ENDIF
+      !perturb the state
+      get_neigh_disc(j)=val
+    ENDDO
+
+  ENDFUNCTION get_neigh_disc
 
 !---------------------------------------------------------------------------------------------------
 !> @brief This subroutine sets the cooling schedule
