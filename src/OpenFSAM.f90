@@ -5,7 +5,7 @@
 MODULE OpenFSAM
   IMPLICIT NONE
   PRIVATE
-  PUBLIC sa_comb_type,sa_cont_type
+  PUBLIC sa_comb_type,sa_cont_type,sa_disc_type
 
   REAL(8),PARAMETER :: pi=4.D0*ATAN(1.D0)
 
@@ -448,7 +448,7 @@ CONTAINS
     INTEGER,DIMENSION(SIZE(s_curr)) :: get_neigh_disc
 
     REAL(8) :: temp_r
-    INTEGER :: i,temp_i,j,val,num_perturb
+    INTEGER :: i,j,val,num_perturb
     REAL(8), DIMENSION(SIZE(thisSA%var_values)) :: rand
 
     !this line is literally just to ensure that it doesn't complain about not using the variables
@@ -459,6 +459,7 @@ CONTAINS
 
     i=1
     DO WHILE(i .LE. num_perturb)
+      i=i+1
       !pick parameter to perturb
       CALL random_number(temp_r)
       j=1+FLOOR(SIZE(s_curr)*temp_r)
