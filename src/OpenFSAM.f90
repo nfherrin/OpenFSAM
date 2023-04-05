@@ -458,6 +458,7 @@ CONTAINS
     num_perturb=MAX(1,thisSA%num_perturb)
 
     i=1
+    get_neigh_disc=thisSA%state_curr
     DO WHILE(i .LE. num_perturb)
       i=i+1
       !pick parameter to perturb
