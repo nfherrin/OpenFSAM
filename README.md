@@ -10,9 +10,9 @@ This module consists of a single module that can be generally assigned to solve 
 A user can easily add this module to any existing modern Fortran program since the module is self contained and sufficiently abstracted.
 
 To use the simulated annealing module, point to it properly in your make file and add `USE OpenFSAM` to the module/program that is using it.
-The simulated annealing module has two public types `sa_comb_type` and `sa_cont_type`.
-`sa_comb_type` is a combinatorial type simulated annealing optimizer and `sa_cont_type` is a continuous function simulated annealing optimizer.
-To use, create a simulated annealing object with `TYPE(sa_comb_type) :: <sa_object>` or  `TYPE(sa_cont_type) :: <sa_object>`.
+The simulated annealing module has three public types `sa_comb_type`, `sa_cont_type`, and `sa_disc_type`.
+`sa_comb_type` is a combinatorial type simulated annealing optimizer, `sa_cont_type` is a continuous function simulated annealing optimizer, and `sa_disc_type` is a discrete function simulated annealing optimizer.
+To use, create a simulated annealing object with `TYPE(sa_comb_type) :: <sa_object>`, `TYPE(sa_cont_type) :: <sa_object>`, or `TYPE(sa_disc_type)`.
 This object now needs to be initialized.
 To initialize, the user must specify the following variables
   1. Maximum number of steps in the annealing `<sa_object>%max_step` (`INT` default: `100`)
@@ -24,7 +24,7 @@ To initialize, the user must specify the following variables
   7. Progress bar `<sa_object>%prog_bar` (`LOGICAL` default: `.FALSE.`)
   8. Restart Value `<sa_object>%resvar` (`REAL(8)` default: `0`)
   9. The initial guess state variable `<sa_object>%state_curr` must be initialized and set.
-    For `sa_comb_type`, this is a one dimensional integer array pointer.
+    For both `sa_comb_type` and `sa_disc_type`, this is a one dimensional integer array pointer.
     For `sa_cont_type`, this is a one dimensional double (`REAL(8)`) array pointer.
     This array has no default and MUST be both allocated and set by the user for the annealing to work.
     As a pointer, allocation can either occur through traditional allocation, or through pointing it to an already existing state variable array in the user's code.
@@ -35,7 +35,8 @@ To initialize, the user must specify the following variables
   12. \[For continuous annealing problems ONLY\] The minimum state variable value, `<sa_object>%smin`, and the maximum state variable value, `<sa_object>%smax`, may be set (`REAL(8)` default: `0.0`).
     If they are not set or if the maximum is set below the minimum, the minimum and maximum values are taken from the minimum and maximum values of the initial state variables.
   13. \[For continuous annealing problems ONLY\] Dynamic damping option `<sa_object>%damp_dyn` (`LOGICAL` default: `.FALSE.`).
-  14. \[For continuous annealing problems ONLY\] Number of parameters to perturb for generating neighbors `<sa_object>%num_perturb` (`INTEGER` default: 0).
+  14. \[For continuous annealing problems and discrete annealing problems ONLY\] Number of parameters to perturb for generating neighbors `<sa_object>%num_perturb` (`INTEGER` default: 0).
+  15. \[For discrete annealing problems ONLY\] Acceptable integer values that each of the parameters to the energy function can adopt are stored in `<sa_object>%var_values`. This parameter MUST be set by the user for annealing to work.
 
 A brief explanation of the user initialized variables:
   1. The maximum number of steps, `n`, is the most steps the annealing counter will reach before stopping.
@@ -73,6 +74,7 @@ A brief explanation of the user initialized variables:
     In the example of the traveling salesman, it is the array of order of customer visitation by the salesman.
     Perturbation for combinatorial problems involves swapping two values.
     Perturbation for continuous problems involves perturbing each value by a random number from negative one half to positive one half times the damping factor.
+    Perturbation for discrete problems involves changing the value of one or more of the parameters.
   10. The energy function is a calculation of a given state variable's energy.
     Simulated annealing searches for the minimum energy, so the user should make certain that their energy function is minimum at the desired optimal result.
     In the example of the traveling salesman, the energy is the total path length the salesman must travel for the given order.
@@ -86,9 +88,11 @@ A brief explanation of the user initialized variables:
     As such, dynamic damping ONLY comes into play if a non-zero restart value is given.
     This can be particularly useful for continuous problems where the user may wish to start with a large (often the default) damping factor, to traverse the whole domain.
     Coupled with dynamic damping and a low (but nonzero) restart value, this allows the user to gradually decrease the effective portion of the domain that is being searched towards the end of the annealing.
-  14. \[For continuous annealing problems ONLY\] When annealing continuous functions it can sometimes be useful to not perturb every parameter when generating neighbors.
+  14. \[For continuous annealing problems and discrete annealing problems ONLY\] When annealing continuous functions it can sometimes be useful to not perturb every parameter when generating neighbors.
+    When annealing discrete functions, it could be desirable to perturb more than one of the input parameters at a time.
     To this end, the user can specify the number of parameters to perturb each iteration during generation of neighbors.
     This can be particularly useful when the energy is heavily dependent on some parameters and less dependent on others.
+  15. \[For discrete annealing problems ONLY\] Since different discrete objective functions have different domains, the user is given the responsiblity to explicitly define the domain for their energy function.
 
 The user may now use the simulated annealing optimization in their code by calling `<sa_object>%optimize`.
 This subroutine results in the optimal state array found stored in `<sa_object>%state_best` and the energy of that state is stored in `<sa_object>%e_best`.
@@ -335,3 +339,45 @@ This example is fairly tailored towards annealing of a traveling salesman proble
 For optimizing larger traveling salesman problems, the functional transform should likely be altered to allow for larger maximum iterations and potentially larger maximum temperatures.
 Additionally, for very large traveling salesman problems it is likely acceptable for the annealing to not reach the exact solution but rather something sufficiently good.
 As such, for very large problems it may be desirable to reduce the weight of the solution error so that states where the exact solution is not always found are acceptable.
+
+---
+## Simulated Annealing for the Ising Model
+---
+
+Finding the ground state of the [Ising model](https://web.stanford.edu/~jeffjar/statmech/intro4.html) is a discrete optimization problem. The Hamiltonian for such a system
+
+$$H ( \vec{\sigma} ) = - \sum_{<i,j>} J_{ij} \sigma_i \sigma_j - \mu \sum_{j} h_j \sigma_{j}$$
+
+is minimized assigning the binary values of $[-1, 1]$ to each of the $n$ elements in the vector $\vec{\sigma}$.
+
+An example of ising model optimization is contained in `examples/ising/`. Initialization is straightforward:
+```
+    annealer%max_step = 100
+    annealer%alpha = 0.01
+    annealer%t_max = 100.0
+    annealer%t_min = 0.0
+    annealer%cool_opt = "QuadAdd"
+    annealer%mon_cool = .true.
+    annealer%prog_bar = .true.
+    annealer%resvar = 0.0
+    annealer%energy => ising_hamiltonian
+    annealer%var_values = [1, -1]
+    annealer%num_perturb = 10
+    allocate(annealer%state_curr(n_spins))
+    annealer%state_curr = state
+```
+The Hamiltonian objective function is given as:
+```
+    !> Ising Model Hamiltonian (with Magnetic Moment, mu = 1)
+    function ising_hamiltonian(sa, state)
+        class(sa_disc_type), intent(inout) :: sa
+        integer, dimension(:), intent(in) :: state
+        integer, dimension(:,:), allocatable :: state_mat
+        real(8) :: ising_hamiltonian, r
+
+        state_mat = reshape(spread(state, 2, size(state)), [size(state), size(state)])
+        ising_hamiltonian = -1 * sum(j * state_mat * transpose(state_mat)) - dot_product(h, state)
+
+    end function ising_hamiltonian
+```
+Most significantly, notice that the annealer was initialized with an array of discrete values which are considered valid, `annealer%var_values = [1, -1]`. You are free to choose any number of discrete integers to populate this parameter. For example, the [**Q**uadratic **U**nconstrained **B**inary **O**ptimization (QUBO) problem](https://arxiv.org/abs/1705.09844#) is very similar in structure to the Ising model, but it uses [0, 1] as valid parameter values.
