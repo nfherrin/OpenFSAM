@@ -1,6 +1,6 @@
 # Defining variables
 FC:=gfortran
-EXE:=sa_ts_sa
+EXE:=ising
 EXT:=.exe
 
 all:			TYPE :=
@@ -24,13 +24,7 @@ SIMANN := ../../src
 #rule declaration. Add these items to FILTER
 #-----------------------------------------------------------------------------------
 
-SRC := \
-				main.f90 	      	\
-				globals.f90	\
-				infuncs.f90	\
-				travel_sales.f90	\
-				sa_ts_sa.f90	\
-				outfuncs.f90
+SRC := ising.f90
 
 OBJ := $(SRC:.f90=.o)
 MOD := $(OBJ:.o=.mod)
@@ -93,7 +87,6 @@ $(EXE): $(OBJ) $(SIMANN_OBJ) $(LIB_OBJ)
 #-----------------------------------------------------------------------------------
 $(SIMANN_OBJ): %.o: $(filter %.f90, $(SIMANN_SRC))
 	$(FC) -c $(OPT) $^
-
 $(SIMANN_MOD):	%.mod:	$(filter %.f90, $(SIMANN_SRC))
 	$(FC) -c $(OPT) $^
 
@@ -102,9 +95,4 @@ $(SIMANN_MOD):	%.mod:	$(filter %.f90, $(SIMANN_SRC))
 #Use [gfortran -M -cpp *.f90] repeatedly until clean compile to update rules below
 #may need to make first to get OpenFSAM module
 #-----------------------------------------------------------------------------------
-globals.o globals.mod: globals.f90 OpenFSAM.mod
-infuncs.o infuncs.mod: infuncs.f90 globals.mod
-main.o: main.f90 globals.mod infuncs.mod outfuncs.mod sa_ts_sa.mod
-outfuncs.o outfuncs.mod: outfuncs.f90 globals.mod
-sa_ts_sa.o sa_ts_sa.mod: sa_ts_sa.f90 globals.mod travel_sales.mod
-travel_sales.o travel_sales.mod: travel_sales.f90 globals.mod
+ising.o: ising.f90 OpenFSAM.mod
