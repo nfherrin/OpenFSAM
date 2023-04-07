@@ -728,7 +728,7 @@ CONTAINS
     !num_unique is the number of unique values
     ALLOCATE(thisSA%var_values(num_unique))
     DO i=1,num_unique
-      thisSA%var_values=var_vals(i)
+      thisSA%var_values(i)=var_vals(i)
     ENDDO
   ENDSUBROUTINE
 END MODULE OpenFSAM
