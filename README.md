@@ -36,7 +36,7 @@ To initialize, the user must specify the following variables
     If they are not set or if the maximum is set below the minimum, the minimum and maximum values are taken from the minimum and maximum values of the initial state variables.
   13. \[For continuous annealing problems ONLY\] Dynamic damping option `<sa_object>%damp_dyn` (`LOGICAL` default: `.FALSE.`).
   14. \[For continuous annealing problems and discrete annealing problems ONLY\] Number of parameters to perturb for generating neighbors `<sa_object>%num_perturb` (`INTEGER` default: 0).
-  15. \[For discrete annealing problems ONLY\] Acceptable integer values that each of the parameters to the energy function can adopt are stored in `<sa_object>%var_values`. This parameter MUST be set by the user for annealing to work.
+  15. \[For discrete annealing problems ONLY\] Acceptable integer values that each of the parameters to the energy function can adopt are stored in `<sa_object>%var_values`. (`INTEGER` default: array of all unique values in the initial state)
 
 A brief explanation of the user initialized variables:
   1. The maximum number of steps, `n`, is the most steps the annealing counter will reach before stopping.
@@ -92,7 +92,7 @@ A brief explanation of the user initialized variables:
     When annealing discrete functions, it could be desirable to perturb more than one of the input parameters at a time.
     To this end, the user can specify the number of parameters to perturb each iteration during generation of neighbors.
     This can be particularly useful when the energy is heavily dependent on some parameters and less dependent on others.
-  15. \[For discrete annealing problems ONLY\] Since different discrete objective functions have different domains, the user is given the responsiblity to explicitly define the domain for their energy function.
+  15. \[For discrete annealing problems ONLY\] Since different discrete objective functions have different domains, the user is given the responsiblity to explicitly define the domain for their energy function. If they do not, then the domain will be assumed to span the unique values in the given initial state. This default is not a range of integers, but a list. So if the initial state contains \{1,3,6\} then the domain will just be the integers 1, 3, and 6 NOT all integers from 1 to 6.
 
 The user may now use the simulated annealing optimization in their code by calling `<sa_object>%optimize`.
 This subroutine results in the optimal state array found stored in `<sa_object>%state_best` and the energy of that state is stored in `<sa_object>%e_best`.
