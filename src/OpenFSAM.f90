@@ -199,6 +199,11 @@ CONTAINS
         IF(.NOT. ALLOCATED(thisSA%state_best))THEN
           ALLOCATE(thisSA%state_best(thisSA%size_states))
         ENDIF
+        !if the var_values have not been given, then traverse the initial state and pick out each
+        !unique value and assume those are the possible values
+        IF(.NOT. ALLOCATED(thisSA%var_values))THEN
+          CALL init_var_values(thisSA)
+        ENDIF
         thisSA%state_neigh=thisSA%state_curr
         thisSA%state_best=thisSA%state_curr
         !set energy to current energy
@@ -694,4 +699,36 @@ CONTAINS
 
     trig_add_cool=tmin+0.5D0*(tmax-tmin)*(1.0D0+COS(k*pi/(n*1.0D0)))
   ENDFUNCTION trig_add_cool
+
+
+!---------------------------------------------------------------------------------------------------
+!> @brief This subroutine initializes var_values if they have not been given.
+!  This is done by traversing the initial state and assuming that the valid values are only
+!  those found in the initial state.
+!> @param thisSA - the discrete simulated annealing object
+!>
+  SUBROUTINE init_var_values(thisSA)
+    CLASS(sa_disc_type),INTENT(INOUT) :: thisSA
+    INTEGER :: var_vals(thisSA%size_states)
+    INTEGER :: i,num_unique
+
+    IF(ANY(var_vals==-999999999))STOP 'if you are going to use -999999999 as a value, specify the &
+        &var_values!'
+    !traverse the initial state to see what the unique values are. uses -999999999
+    !to indicate values not yet found
+    var_vals=-999999999
+    num_unique=0
+    DO i=1,thisSA%size_states
+      !check to see if we've already recorded this value, if not then add it to the list!
+      IF(.NOT. ANY(var_vals==thisSA%state_curr(i)))THEN
+        num_unique=num_unique+1
+        var_vals(num_unique)=thisSA%state_curr(i)
+      ENDIF
+    ENDDO
+    !num_unique is the number of unique values
+    ALLOCATE(thisSA%var_values(num_unique))
+    DO i=1,num_unique
+      thisSA%var_values=var_vals(i)
+    ENDDO
+  ENDSUBROUTINE
 END MODULE OpenFSAM
