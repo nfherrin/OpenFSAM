@@ -5,7 +5,7 @@
 MODULE OpenFSAM
   IMPLICIT NONE
   PRIVATE
-  PUBLIC sa_comb_type,sa_cont_type,sa_disc_type
+  PUBLIC sa_comb_type,sa_cont_type,sa_disc_type,sa_type_base
 
   REAL(8),PARAMETER :: pi=4.D0*ATAN(1.D0)
 
