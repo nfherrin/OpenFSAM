@@ -448,8 +448,9 @@ CONTAINS
     INTEGER,DIMENSION(SIZE(s_curr)) :: get_neigh_disc
 
     REAL(8) :: temp_r
-    INTEGER :: i,j,val,num_perturb
+    INTEGER :: i,j,val,num_perturb,temp_i
     REAL(8), DIMENSION(SIZE(thisSA%var_values)) :: rand
+    INTEGER, ALLOCATABLE :: perturb_locs(:)
 
     !this line is literally just to ensure that it doesn't complain about not using the variables
     IF(.FALSE.)temp_r=thisSA%e_best
@@ -457,13 +458,29 @@ CONTAINS
     !perturb at least one parameter
     num_perturb=MAX(1,thisSA%num_perturb)
 
+    !find which locations we are perturbing
+    ALLOCATE(perturb_locs(num_perturb))
+    perturb_locs=0
     i=1
-    get_neigh_disc=thisSA%state_curr
     DO WHILE(i .LE. num_perturb)
-      i=i+1
-      !pick parameter to perturb
+      !get a random index for the parameters
       CALL random_number(temp_r)
-      j=1+FLOOR(SIZE(s_curr)*temp_r)
+      temp_i=1+FLOOR(temp_r*SIZE(s_curr))
+      j=i
+      DO j=1,i-1
+        IF(perturb_locs(j) .EQ. temp_i)EXIT
+      ENDDO
+      !if we exited early then we already found the index so we don't use that index and repeat
+      IF(j .EQ. i)THEN
+        perturb_locs(j)=temp_i
+        i=i+1
+      ENDIF
+    ENDDO
+
+    !now actually perturb the system at each location
+    get_neigh_disc=s_curr
+    DO i=1,num_perturb
+      j=perturb_locs(i)
       !pick new discrete value
       CALL random_number(rand)
       val=thisSA%var_values(MAXLOC(rand,DIM=1))
