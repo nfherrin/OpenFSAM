@@ -159,7 +159,7 @@ CONTAINS
 
     !allocate the neighbor state variables and set the cooling, also set initial energy
     SELECTTYPE(thisSA)
-      TYPEIS(sa_comb_type)
+      TYPE IS(sa_comb_type)
         thisSA%size_states=SIZE(thisSA%state_curr)
         IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
           ALLOCATE(thisSA%state_neigh(thisSA%size_states))
@@ -172,7 +172,7 @@ CONTAINS
         !set energy to current energy
         e_curr=thisSA%energy(thisSA%state_curr)
         thisSA%e_best=e_curr
-      TYPEIS(sa_cont_type)
+      TYPE IS(sa_cont_type)
         thisSA%size_states=SIZE(thisSA%state_curr)
         IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
           ALLOCATE(thisSA%state_neigh(thisSA%size_states))
@@ -191,7 +191,7 @@ CONTAINS
           thisSA%smin=MINVAL(thisSA%state_curr)
         ENDIF
         IF(thisSA%damping .LE. 1.0D-15)thisSA%damping=ABS(thisSA%smax-thisSA%smin)/2.0D0
-      TYPEIS(sa_disc_type)
+      TYPE IS(sa_disc_type)
         thisSA%size_states=SIZE(thisSA%state_curr)
         IF(.NOT. ALLOCATED(thisSA%state_neigh))THEN
           ALLOCATE(thisSA%state_neigh(thisSA%size_states))
@@ -221,13 +221,13 @@ CONTAINS
       thisSA%total_steps=thisSA%total_steps+1
       !get a new neighbor and compute energy
       SELECTTYPE(thisSA)
-        TYPEIS(sa_comb_type)
+        TYPE IS(sa_comb_type)
           thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr)
           e_neigh=thisSA%energy(thisSA%state_neigh)
-        TYPEIS(sa_cont_type)
+        TYPE IS(sa_cont_type)
           thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr,thisSA%damping,thisSA%smax,thisSA%smin)
           e_neigh=thisSA%energy(thisSA%state_neigh)
-        TYPEIS(sa_disc_type)
+        TYPE IS(sa_disc_type)
           thisSA%state_neigh=thisSA%get_neigh(thisSA%state_curr)
           e_neigh=thisSA%energy(thisSA%state_neigh)
       ENDSELECT
@@ -239,11 +239,11 @@ CONTAINS
         IF(thisSA%prog_bar .AND. MOD(step,NINT(thisSA%max_step/91.D0)) .EQ. 0) &
           WRITE(*,'(A)',ADVANCE='NO')'*'
         SELECTTYPE(thisSA)
-          TYPEIS(sa_comb_type)
+          TYPE IS(sa_comb_type)
             thisSA%state_curr=thisSA%state_neigh
-          TYPEIS(sa_cont_type)
+          TYPE IS(sa_cont_type)
             thisSA%state_curr=thisSA%state_neigh
-          TYPEIS(sa_disc_type)
+          TYPE IS(sa_disc_type)
             thisSA%state_curr=thisSA%state_neigh
         ENDSELECT
         e_curr=e_neigh
@@ -263,11 +263,11 @@ CONTAINS
       IF(e_curr .LT. thisSA%e_best)THEN
         thisSA%e_best=e_curr
         SELECTTYPE(thisSA)
-          TYPEIS(sa_comb_type)
+          TYPE IS(sa_comb_type)
             thisSA%state_best=thisSA%state_neigh
-          TYPEIS(sa_cont_type)
+          TYPE IS(sa_cont_type)
             thisSA%state_best=thisSA%state_neigh
-          TYPEIS(sa_disc_type)
+          TYPE IS(sa_disc_type)
             thisSA%state_best=thisSA%state_neigh
         ENDSELECT
       ENDIF
@@ -276,14 +276,14 @@ CONTAINS
       IF(ABS(t_curr) .LE. thisSA%resvar)THEN
         thisSA%resvar=thisSA%resvar/2.0D0
         SELECTTYPE(thisSA)
-          TYPEIS(sa_comb_type)
+          TYPE IS(sa_comb_type)
             e_curr=thisSA%e_best
             thisSA%state_curr=thisSA%state_best
-          TYPEIS(sa_cont_type)
+          TYPE IS(sa_cont_type)
             e_curr=thisSA%e_best
             thisSA%state_curr=thisSA%state_best
             IF(thisSA%damp_dyn)thisSA%damping=thisSA%damping/2.0D0
-          TYPEIS(sa_disc_type)
+          TYPE IS(sa_disc_type)
             e_curr=thisSA%e_best
             thisSA%state_curr=thisSA%state_best
         ENDSELECT
@@ -294,11 +294,11 @@ CONTAINS
 
     !set to the best state we ended up finding.
     SELECTTYPE(thisSA)
-      TYPEIS(sa_comb_type)
+      TYPE IS(sa_comb_type)
         thisSA%state_curr=thisSA%state_best
-      TYPEIS(sa_cont_type)
+      TYPE IS(sa_cont_type)
         thisSA%state_curr=thisSA%state_best
-      TYPEIS(sa_disc_type)
+      TYPE IS(sa_disc_type)
         thisSA%state_curr=thisSA%state_best
     ENDSELECT
   ENDSUBROUTINE optimize
