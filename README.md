@@ -152,6 +152,14 @@ With the traveling salesman problem setup and simulated annealing initialization
 Which can then view the optimal state array in the form of `ts_simanneal%state_best` with an energy (path length) of `ts_simanneal%e_best`.
 
 ---
+## Installation
+___
+
+OpenFSAM can optionally be installed as a shared library using the [Meson Build System](https://www.mesonbuild.com) in the event that you wish to link your program to it.
+
+After [installing Meson](https://mesonbuild.com/SimpleStart.html), installing OpenFSAM is as simple as running `meson setup build` followed by `meson -C build install`.
+
+---
 ## Simulated Annealing for Continuous Function Optimization
 ---
 
